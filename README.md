@@ -9,6 +9,7 @@
 ## 目录
 
 - [功能特性](#功能特性)
+- [界面预览](#界面预览)
 - [技术栈](#技术栈)
 - [项目结构](#项目结构)
 - [快速开始](#快速开始)
@@ -17,7 +18,6 @@
 - [环境变量](#环境变量)
 - [API 文档](#api-文档)
 - [数据库设计](#数据库设计)
-- [界面预览](#界面预览)
 - [相关文档](#相关文档)
 
 ---
@@ -31,6 +31,25 @@
 - 🗄️ **原始事件优先**：保留完整原始事件（不丢弃字段、不只存聚合结果），为生长曲线与 AI 分析留足数据底座。
 - 🛡️ **统一契约**：统一响应格式 `{ code, message, data }`、统一异常处理、全局 DTO 校验、Swagger 自动文档。
 - 🐳 **一键部署**：多阶段构建的单镜像，内置 nginx 反代 + Node 运行时，自动建表与种子数据。
+
+---
+
+## 界面预览
+
+> 以下为系统主要界面截图，左右滑动可查看全部页面。每张截图统一宽度并保持原始宽高比，避免图片过大导致页面过长。
+
+<table>
+  <tr>
+    <td align="center"><img src="./docs/主页.jpg" width="300" alt="主页"><br><sub>主页（仪表盘）</sub></td>
+    <td align="center"><img src="./docs/记录页面.jpg" width="300" alt="记录页面"><br><sub>记录页面</sub></td>
+    <td align="center"><img src="./docs/喂养详情页.jpg" width="300" alt="喂养详情页"><br><sub>喂养详情页</sub></td>
+    <td align="center"><img src="./docs/睡眠记录.jpg" width="300" alt="睡眠记录"><br><sub>睡眠记录</sub></td>
+    <td align="center"><img src="./docs/纸尿裤更换.jpg" width="300" alt="纸尿裤更换"><br><sub>纸尿裤更换</sub></td>
+    <td align="center"><img src="./docs/其他记录.jpg" width="300" alt="其他记录"><br><sub>其他记录</sub></td>
+    <td align="center"><img src="./docs/宝贝信息页面.jpg" width="300" alt="宝贝信息页面"><br><sub>宝贝信息页面</sub></td>
+    <td align="center"><img src="./docs/成长统计.jpg" width="300" alt="成长统计"><br><sub>成长统计</sub></td>
+  </tr>
+</table>
 
 ## 技术栈
 
@@ -201,44 +220,6 @@ pnpm dev           # 即 pnpm dev:frontend
 | `ai_analysis`（预留） | analysis_type, period_start/end, input(JSON), result(JSON) |
 
 ER 图见 [docs/er-diagram.md](./docs/er-diagram.md)，建表 SQL 见 [docs/schema.sql](./docs/schema.sql)。
-
----
-
-## 界面预览
-
-> 以下为系统主要界面截图，直观展示各功能页面的实际效果。
-
-### 主页（仪表盘）
-
-![主页](./docs/主页.jpg)
-
-### 记录页面
-
-![记录页面](./docs/记录页面.jpg)
-
-### 喂养详情页
-
-![喂养详情页](./docs/喂养详情页.jpg)
-
-### 睡眠记录
-
-![睡眠记录](./docs/睡眠记录.jpg)
-
-### 纸尿裤更换
-
-![纸尿裤更换](./docs/纸尿裤更换.jpg)
-
-### 其他记录
-
-![其他记录](./docs/其他记录.jpg)
-
-### 宝贝信息页面
-
-![宝贝信息页面](./docs/宝贝信息页面.jpg)
-
-### 成长统计
-
-![成长统计](./docs/成长统计.jpg)
 
 ## 相关文档
 
