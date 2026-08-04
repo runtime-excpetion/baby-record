@@ -40,7 +40,7 @@ async function chooseAvatar(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file || !baby.value) return;
   if (!file.type.startsWith('image/')) { message.warning('请选择图片文件'); return; }
-  if (file.size > 2 * 1024 * 1024) { message.warning('头像图片请小于 2MB'); return; }
+  if (file.size > 8 * 1024 * 1024) { message.warning('头像图片请小于 8MB'); return; }
   const reader = new FileReader();
   reader.onload = async () => {
     try {

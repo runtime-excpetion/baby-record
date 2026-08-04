@@ -24,9 +24,11 @@ const babyStore = useBabyStore();
 const dialog = useDialog();
 const message = useMessage();
 
-const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
+// 范围值用「当天 00:00」对齐 Naive UI 日历格子的时间戳；
+// end 不用 23:59:59.999 —— 那个值会被 isFuture 判为未来，导致输入框截止日期被划删除线。
+const today = new Date(); today.setHours(0, 0, 0, 0);
 const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
-const dateRange = ref<[number, number] | null>([startOfMonth.getTime(), endOfToday.getTime()]);
+const dateRange = ref<[number, number] | null>([startOfMonth.getTime(), today.getTime()]);
 const selectedType = ref<'all' | TimelineEntry['type']>('all');
 const loading = ref(false);
 const items = ref<TimelineEntry[]>([]);
@@ -142,8 +144,12 @@ async function removeEntry(e: TimelineEntry) {
   });
 }
 
+// 按日历日比较：只禁用「明天及以后」，今天可选。
+// 用毫秒级 Date.now() 比较会把今天 00:00 之后的所有时刻误判为未来。
 function isFuture(ts: number): boolean {
-  return ts > Date.now();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return ts >= today.getTime() + 24 * 60 * 60 * 1000;
 }
 
 const filteredItems = computed(() => selectedType.value === 'all' ? items.value : items.value.filter((item) => item.type === selectedType.value));

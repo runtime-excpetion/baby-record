@@ -16,6 +16,10 @@ async function bootstrap() {
   const swaggerPath = configService.get<string>('app.swaggerPath') || 'docs';
   const port = configService.get<number>('app.port') || 3000;
 
+  // 放宽 JSON 请求体上限：宝宝头像以 Data URL 形式随 JSON 提交，base64 后体积较大
+  app.useBodyParser('json', { limit: '8mb' });
+  app.useBodyParser('urlencoded', { limit: '8mb', extended: true });
+
   // 全局 API 前缀
   app.setGlobalPrefix(apiPrefix);
 
