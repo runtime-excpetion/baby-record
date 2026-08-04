@@ -32,7 +32,7 @@ RUN pnpm --filter @baby-record/backend build
 # ====== 阶段 3: 运行时（node + nginx 单镜像）======
 FROM node:22-alpine
 RUN corepack enable
-RUN apk add --no-cache nginx
+RUN apk add --no-cache nginx openssl
 WORKDIR /app
 
 # 安装后端生产依赖（pnpm 在运行时重建 node_modules，避免构建期 symlink 跨阶段复制断裂）
