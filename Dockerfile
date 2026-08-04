@@ -41,10 +41,12 @@ COPY apps/backend/package.json apps/backend/
 COPY packages/shared/package.json packages/shared/
 RUN pnpm install --filter @baby-record/backend --filter @baby-record/shared --prod
 
-# 后端编译产物 + schema + prisma generate 产物（含查询引擎）
-COPY --from=backend-builder /app/apps/backend/dist ./apps/backend/dist
+# schema + 在运行时镜像内重新 prisma generate（确保 .prisma 生成到 @prisma/client 实际所在位置）
 COPY --from=backend-builder /app/apps/backend/prisma ./apps/backend/prisma
-COPY --from=backend-builder /app/apps/backend/node_modules/.prisma ./apps/backend/node_modules/.prisma
+RUN cd apps/backend && npx --yes prisma@5 generate --schema=prisma/schema.prisma
+
+# 后端编译产物
+COPY --from=backend-builder /app/apps/backend/dist ./apps/backend/dist
 
 # 前端产物
 COPY --from=frontend-builder /app/apps/frontend/dist /usr/share/nginx/html
