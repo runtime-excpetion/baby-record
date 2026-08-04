@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.pnpm-store
+.env
+.env.local
+*.local
+.DS_Store
+.git
+*.log
+apps/frontend/.env

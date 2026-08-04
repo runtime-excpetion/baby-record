@@ -1,0 +1,236 @@
+// 宝宝成长记录服务 - Prisma Schema
+// 文档参见 docs/design.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ 枚举 ============
+
+enum Gender {
+  MALE   // 男
+  FEMALE // 女
+}
+
+enum UserRole {
+  DAD        // 爸爸
+  MOM        // 妈妈
+  GRANDPA_P  // 爷爷
+  GRANDMA_P  // 奶奶
+  GRANDMA_M  // 姥姥
+  GRANDPA_M  // 姥爷
+}
+
+enum FeedingType {
+  BREAST_MILK // 母乳
+  FORMULA     // 奶粉
+  MIXED       // 混合
+}
+
+enum DiaperType {
+  PEE   // 尿
+  POOP  // 便便
+  BOTH  // 尿+便
+}
+
+enum SleepType {
+  DAYTIME // 白天
+  NIGHT   // 夜间
+}
+
+// ============ 核心模型 ============
+
+model Baby {
+  id                Int      @id @default(autoincrement())
+  name              String
+  nickname          String?  @map("nickname")
+  gender            Gender
+  birthday          DateTime @db.Date
+  birthWeight       Decimal? @map("birth_weight") @db.Decimal(6, 2)
+  birthHeight       Decimal? @map("birth_height") @db.Decimal(5, 1)
+  headCircumference Decimal? @map("head_circumference") @db.Decimal(5, 1)
+  birthHospital     String?  @map("birth_hospital")
+  remark            String?
+  createdTime       DateTime @default(now()) @map("created_time")
+  updatedTime       DateTime @updatedAt @map("updated_time")
+
+  feedings       Feeding[]
+  diapers        Diaper[]
+  sleeps         Sleep[]
+  supplements    Supplement[]
+  activities     Activity[]
+  growthRecords  GrowthRecord[]
+  medicalRecords MedicalRecord[]
+  aiAnalyses     AiAnalysis[]
+
+  @@map("baby")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  name        String
+  role        UserRole
+  createdTime DateTime @default(now()) @map("created_time")
+
+  feedings      Feeding[]
+  diapers       Diaper[]
+  sleeps        Sleep[]
+  supplements   Supplement[]
+  activities    Activity[]
+  growthRecords GrowthRecord[]
+  medicalRecords MedicalRecord[]
+
+  @@map("user")
+}
+
+model Feeding {
+  id              Int         @id @default(autoincrement())
+  babyId          Int         @map("baby_id")
+  feedingTime     DateTime    @map("feeding_time")
+  feedingType     FeedingType @map("feeding_type")
+  amountMl        Int?        @map("amount_ml")
+  durationMinutes Int?        @map("duration_minutes")
+  remark          String?
+  creatorId       Int         @map("creator_id")
+  createdTime     DateTime    @default(now()) @map("created_time")
+
+  baby    Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [creatorId], references: [id])
+
+  @@index([babyId, feedingTime])
+  @@index([creatorId])
+  @@map("feeding")
+}
+
+model Diaper {
+  id          Int        @id @default(autoincrement())
+  babyId      Int        @map("baby_id")
+  changeTime  DateTime   @map("change_time")
+  type        DiaperType
+  remark      String?
+  creatorId   Int        @map("creator_id")
+  createdTime DateTime   @default(now()) @map("created_time")
+
+  baby    Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [creatorId], references: [id])
+
+  @@index([babyId, changeTime])
+  @@index([creatorId])
+  @@map("diaper")
+}
+
+model Sleep {
+  id              Int       @id @default(autoincrement())
+  babyId          Int       @map("baby_id")
+  startTime       DateTime  @map("start_time")
+  endTime         DateTime? @map("end_time") // 空 = 正在睡眠
+  durationMinutes Int?      @map("duration_minutes") // 结束时回填
+  sleepType       SleepType @map("sleep_type")
+  remark          String?
+  creatorId       Int       @map("creator_id")
+  createdTime     DateTime  @default(now()) @map("created_time")
+
+  baby    Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [creatorId], references: [id])
+
+  @@index([babyId, startTime])
+  @@index([creatorId])
+  @@map("sleep")
+}
+
+model Supplement {
+  id          Int      @id @default(autoincrement())
+  babyId      Int      @map("baby_id")
+  name        String // 维生素D / DHA / 钙 / 其他
+  amount      String?
+  unit        String? // 滴 / 粒 / ml
+  takeTime    DateTime @map("take_time")
+  remark      String?
+  creatorId   Int      @map("creator_id")
+  createdTime DateTime @default(now()) @map("created_time")
+
+  baby    Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [creatorId], references: [id])
+
+  @@index([babyId, takeTime])
+  @@index([creatorId])
+  @@map("supplement")
+}
+
+model Activity {
+  id          Int      @id @default(autoincrement())
+  babyId      Int      @map("baby_id")
+  eventType   String   @map("event_type") // 玩耍/抬头/翻身/洗澡/练习坐/其他
+  eventTime   DateTime @map("event_time")
+  description String?
+  remark      String?
+  creatorId   Int      @map("creator_id")
+  createdTime DateTime @default(now()) @map("created_time")
+
+  baby    Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [creatorId], references: [id])
+
+  @@index([babyId, eventTime])
+  @@index([creatorId])
+  @@map("activity")
+}
+
+// ============ 预留扩展模型（建表，模块后续开发） ============
+
+model GrowthRecord {
+  id                Int      @id @default(autoincrement())
+  babyId            Int      @map("baby_id")
+  measureTime       DateTime @map("measure_time")
+  weight            Decimal? @db.Decimal(6, 2)
+  height            Decimal? @db.Decimal(5, 1)
+  headCircumference Decimal? @map("head_circumference") @db.Decimal(5, 1)
+  remark            String?
+  creatorId         Int      @map("creator_id")
+  createdTime       DateTime @default(now()) @map("created_time")
+
+  baby    Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [creatorId], references: [id])
+
+  @@index([babyId, measureTime])
+  @@map("growth_record")
+}
+
+model MedicalRecord {
+  id          Int      @id @default(autoincrement())
+  babyId      Int      @map("baby_id")
+  recordType  String   @map("record_type") // 疫苗/体检/就诊/用药
+  recordTime  DateTime @map("record_time")
+  title       String
+  description String?
+  remark      String?
+  creatorId   Int      @map("creator_id")
+  createdTime DateTime @default(now()) @map("created_time")
+
+  baby    Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  creator User @relation(fields: [creatorId], references: [id])
+
+  @@index([babyId, recordTime])
+  @@map("medical_record")
+}
+
+model AiAnalysis {
+  id           Int      @id @default(autoincrement())
+  babyId       Int      @map("baby_id")
+  analysisType String   @map("analysis_type") // 喂养规律/睡眠趋势/异常提醒
+  periodStart  DateTime @map("period_start")
+  periodEnd    DateTime @map("period_end")
+  input        Json // 输入快照(原始事件聚合)
+  result       Json // 分析结果
+  model        String? // 模型标识
+  createdTime  DateTime @default(now()) @map("created_time")
+
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+
+  @@index([babyId, periodStart])
+  @@map("ai_analysis")
+}

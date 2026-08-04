@@ -1,0 +1,47 @@
+# 宝宝成长记录服务 · docker-compose
+#
+# 模式 A（开箱即用，推荐快速体验）：
+#   docker-compose up -d --build
+#   内置 PostgreSQL 自动建表（挂载 docs/schema.sql），应用连接内置数据库。
+#
+# 模式 B（连接外部 PostgreSQL，如 192.168.28.30:3308）：
+#   注释掉 postgres 服务与 depends_on，并将 app.environment 中的数据库连接改为外部地址，
+#   或改用 env_file: .env（需先 cp .env.example .env 并填写）。
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: baby-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: baby-db
+      POSTGRES_USER: baby_user
+      POSTGRES_PASSWORD: Common@123
+    ports:
+      - "3308:5432"
+    volumes:
+      - baby-pgdata:/var/lib/postgresql/data
+      - ../../docs/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+  app:
+    build: .
+    container_name: baby-record
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - APP_PORT=3000
+      - API_PREFIX=api/v1
+      - SWAGGER_PATH=docs
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=baby-db
+      - DATABASE_USERNAME=baby_user
+      - DATABASE_PASSWORD=Common@123
+      - DATABASE_URL=postgresql://baby_user:Common%40123@postgres:5432/baby-db?schema=public
+    depends_on:
+      - postgres
+
+volumes:
+  baby-pgdata:

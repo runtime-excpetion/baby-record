@@ -1,0 +1,19 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+allowBuilds:
+  '@prisma/engines': set this to true or false
+  '@scarf/scarf': set this to true or false
+  prisma: set this to true or false
+  vue-demi: set this to true or false
+
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - prisma
+  - esbuild
+  - vue-demi
+  - '@scarf/scarf'
+
+strictDepBuilds: false

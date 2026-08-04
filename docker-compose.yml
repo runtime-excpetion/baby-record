@@ -1,0 +1,53 @@
+# 宝宝成长记录系统 · 整项目单镜像 docker-compose
+#
+# 一键启动（内置 PostgreSQL，自动建表 + 种子数据 + 前后端）：
+#   docker compose up -d --build
+#   访问 http://localhost:8080
+#
+# 连接外部 PostgreSQL：
+#   注释掉 postgres 服务与 app.depends_on，并将 app.environment 的 DATABASE_* 改为外部地址。
+
+services:
+  app:
+    build: .
+    container_name: baby-record-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+      - APP_PORT=3000
+      - API_PREFIX=api/v1
+      - SWAGGER_PATH=docs
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=baby-db
+      - DATABASE_USERNAME=baby_user
+      - DATABASE_PASSWORD=Common@123
+      - DATABASE_URL=postgresql://baby_user:Common%40123@postgres:5432/baby-db?schema=public
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
+
+  # 可选：内置 PostgreSQL（连接外部数据库时注释掉整个 postgres 服务）
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: baby-record-pg
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: baby-db
+  #     POSTGRES_USER: baby_user
+  #     POSTGRES_PASSWORD: Common@123
+  #   ports:
+  #     - "3308:5432"
+  #   volumes:
+  #     - baby-pgdata:/var/lib/postgresql/data
+  #     - ./docs/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U baby_user -d baby-db"]
+  #     interval: 3s
+  #     timeout: 3s
+  #     retries: 10
+
+# volumes:
+#   baby-pgdata:
