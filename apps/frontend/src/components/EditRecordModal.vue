@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useMessage } from 'naive-ui';
-import { NInput, NInputNumber } from 'naive-ui';
+import { NInput, NInputNumber, NDatePicker } from 'naive-ui';
 import IconPicker from '@/components/form/IconPicker.vue';
 import DateTimePicker from '@/components/form/DateTimePicker.vue';
 import { feedingApi } from '@/api/feeding';
@@ -24,6 +24,8 @@ const emit = defineEmits<{ close: []; saved: [] }>();
 const message = useMessage();
 
 const time = ref(0);
+const sleepStart = ref(0);
+const sleepEnd = ref<number | null>(null);
 const remark = ref('');
 const feedingType = ref<FeedingType>('FORMULA');
 const amountMl = ref<number | null>(null);
@@ -75,7 +77,8 @@ watch(
       diaperType.value = r.type as DiaperType;
       remark.value = (r.remark as string) || '';
     } else if (e.type === 'sleep') {
-      time.value = new Date(r.startTime as string).getTime();
+      sleepStart.value = new Date(r.startTime as string).getTime();
+      sleepEnd.value = r.endTime ? new Date(r.endTime as string).getTime() : null;
       remark.value = (r.remark as string) || '';
     } else if (e.type === 'supplement') {
       time.value = new Date(r.takeTime as string).getTime();
@@ -113,7 +116,11 @@ async function onSave() {
         remark: remark.value || undefined,
       });
     } else if (e.type === 'sleep') {
-      await sleepApi.update(r.id, { remark: remark.value || undefined });
+      await sleepApi.update(r.id, {
+        startTime: iso(sleepStart.value),
+        endTime: sleepEnd.value ? iso(sleepEnd.value) : undefined,
+        remark: remark.value || undefined,
+      });
     } else if (e.type === 'supplement') {
       await supplementApi.update(r.id, {
         name: supplementName.value,
@@ -157,6 +164,25 @@ async function onSave() {
             <label class="text-sm font-medium text-ios-secondary">时间</label>
             <DateTimePicker v-model="time" class="mt-2 w-full" />
           </div>
+
+          <template v-if="entry.type === 'sleep'">
+            <div class="bg-ios-card rounded-3xl p-4 shadow-card">
+              <label class="text-sm font-medium text-ios-secondary">开始时间</label>
+              <DateTimePicker v-model="sleepStart" class="mt-2 w-full" />
+            </div>
+            <div class="bg-ios-card rounded-3xl p-4 shadow-card">
+              <label class="text-sm font-medium text-ios-secondary">结束时间</label>
+              <NDatePicker
+                v-model:value="sleepEnd"
+                type="datetime"
+                format="yyyy-MM-dd HH:mm"
+                :time-picker-props="{ format: 'HH:mm' }"
+                clearable
+                class="mt-2 w-full"
+              />
+              <p class="text-xs text-ios-secondary mt-1">不填表示睡眠中</p>
+            </div>
+          </template>
 
           <template v-if="entry.type === 'feeding'">
             <div class="bg-ios-card rounded-3xl p-4 shadow-card">
