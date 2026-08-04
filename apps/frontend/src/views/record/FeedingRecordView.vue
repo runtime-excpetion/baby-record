@@ -2,10 +2,11 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessage } from 'naive-ui';
-import { NInputNumber, NInput } from 'naive-ui';
+import { NInput } from 'naive-ui';
 import AppHeader from '@/components/AppHeader.vue';
 import DateTimePicker from '@/components/form/DateTimePicker.vue';
 import IconPicker from '@/components/form/IconPicker.vue';
+import WheelPicker from '@/components/form/WheelPicker.vue';
 import { feedingApi } from '@/api/feeding';
 import { useBabyStore } from '@/stores/baby';
 import { useUserStore } from '@/stores/user';
@@ -20,7 +21,7 @@ const dashStore = useDashboardStore();
 
 const feedingType = ref<FeedingType>('FORMULA');
 const time = ref(Date.now());
-const amountMl = ref<number | null>(120);
+const amountMl = ref(120);
 const remark = ref('');
 const submitting = ref(false);
 
@@ -43,7 +44,7 @@ async function onSubmit() {
       babyId: baby.id,
       feedingType: feedingType.value,
       feedingTime: new Date(time.value).toISOString(),
-      amountMl: amountMl.value ?? undefined,
+      amountMl: amountMl.value,
       remark: remark.value || undefined,
       creatorId: user.id,
     });
@@ -74,16 +75,8 @@ async function onSubmit() {
 
       <div class="bg-ios-card rounded-3xl p-4 shadow-card">
         <label class="text-sm font-medium text-ios-secondary">奶量</label>
-        <div class="mt-2 grid grid-cols-4 gap-2 items-center">
-          <NInputNumber
-            v-model:value="amountMl"
-            :min="0"
-            :max="500"
-            :step="10"
-            placeholder="输入奶量"
-            class="col-span-3"
-          />
-          <span class="text-sm text-ios-secondary text-center">ml</span>
+        <div class="mt-2 flex items-center gap-2">
+          <WheelPicker v-model="amountMl" :options="Array.from({ length: 31 }, (_, i) => ({ label: `${i * 10} ml`, value: i * 10 }))" class="flex-1" />
         </div>
       </div>
 

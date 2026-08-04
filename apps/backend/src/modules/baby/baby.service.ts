@@ -19,6 +19,7 @@ export interface BabyVo {
   headCircumference: number | null;
   birthHospital: string | null;
   remark: string | null;
+  avatar: string | null;
   createdTime: string;
   updatedTime: string;
   age: AgeInfo;
@@ -59,7 +60,17 @@ export class BabyService {
         ...(dto.headCircumference !== undefined && { headCircumference: dto.headCircumference }),
         ...(dto.birthHospital !== undefined && { birthHospital: dto.birthHospital }),
         ...(dto.remark !== undefined && { remark: dto.remark }),
+        ...(dto.avatar !== undefined && { avatar: dto.avatar }),
       },
+    });
+    return this.toVo(baby);
+  }
+
+  async uploadAvatar(id: number, filename: string): Promise<BabyVo> {
+    await this.findOne(id);
+    const baby = await this.prisma.baby.update({
+      where: { id },
+      data: { avatar: `/uploads/${filename}` },
     });
     return this.toVo(baby);
   }
@@ -93,6 +104,7 @@ export class BabyService {
       headCircumference: baby.headCircumference !== null ? Number(baby.headCircumference) : null,
       birthHospital: baby.birthHospital,
       remark: baby.remark,
+      avatar: baby.avatar,
       createdTime: baby.createdTime.toISOString(),
       updatedTime: baby.updatedTime.toISOString(),
       age: AgeUtil.calc(baby.birthday),

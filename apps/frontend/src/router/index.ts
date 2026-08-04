@@ -31,6 +31,12 @@ const routes: RouteRecordRaw[] = [
         meta: { tab: 'record' },
       },
       {
+        path: 'record/temperature',
+        name: 'record-temperature',
+        component: () => import('@/views/record/TemperatureRecordView.vue'),
+        meta: { tab: 'record' },
+      },
+      {
         path: 'record/diaper',
         name: 'record-diaper',
         component: () => import('@/views/record/DiaperRecordView.vue'),

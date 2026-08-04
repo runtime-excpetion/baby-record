@@ -7,6 +7,7 @@ import { useRecordStore } from '@/stores/record';
 import StatCard from '@/components/StatCard.vue';
 import QuickActionButton from '@/components/QuickActionButton.vue';
 import { fmtTime } from '@/utils/format';
+import { getTempStatus } from '@baby-record/shared';
 
 const router = useRouter();
 const babyStore = useBabyStore();
@@ -47,7 +48,14 @@ const quickActions = [
   { icon: '🧷', label: '纸尿裤', color: 'bg-ios-blue/15', to: '/record/diaper' },
   { icon: '😴', label: '睡觉', color: 'bg-ios-purple/15', to: '/record/sleep' },
   { icon: '✨', label: '其他', color: 'bg-ios-green/15', to: '/record/activity' },
+  { icon: '🌡️', label: '体温', color: 'bg-ios-pink/15', to: '/record/temperature' },
 ];
+
+const latestTemperature = computed(() => dashStore.data?.latestTemperature || null);
+const temperatureClass = computed(() => {
+  if (!latestTemperature.value) return 'text-ios-secondary';
+  return { normal: 'text-ios-green', watch: 'text-ios-orange', fever: 'text-ios-pink', high: 'text-black font-bold' }[getTempStatus(latestTemperature.value.temperature)];
+});
 
 const sleepValue = computed(() => {
   if (recordStore.ongoingSleep) return '睡眠中';
@@ -92,7 +100,8 @@ const sleepSub = computed(() => {
         <div
           class="w-14 h-14 rounded-full bg-gradient-to-br from-ios-blue to-ios-teal flex items-center justify-center text-3xl shadow-soft"
         >
-          👶
+          <img v-if="baby.avatar" :src="baby.avatar" alt="宝宝头像" class="w-full h-full rounded-full object-cover" />
+          <template v-else>👶</template>
         </div>
         <div>
           <h1 class="text-2xl font-bold text-ios-label">{{ baby.nickname || baby.name }}</h1>
@@ -128,12 +137,27 @@ const sleepSub = computed(() => {
         "
       />
       <StatCard icon="😴" title="距离上次睡眠" :value="sleepValue" accent="text-ios-purple" :sub="sleepSub" />
+      <div class="bg-ios-card rounded-3xl p-4 shadow-card">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🌡️</span>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-ios-secondary">宝宝最新体温</p>
+            <p v-if="latestTemperature" class="text-xl num-display mt-1" :class="temperatureClass">{{ latestTemperature.temperature.toFixed(1) }}℃</p>
+            <p v-else class="text-sm text-ios-secondary mt-1">暂无体温记录</p>
+          </div>
+          <button class="text-sm text-ios-pink font-medium" @click="router.push('/record/temperature')">记录</button>
+        </div>
+        <div v-if="latestTemperature && latestTemperature.temperature > 37.2" class="mt-3 rounded-2xl bg-ios-orange/10 p-3 text-sm text-ios-orange">
+          <p class="font-semibold">宝宝体温需要关注</p>
+          <p class="text-xs mt-1">请在宝宝平稳状态下进行测量</p>
+        </div>
+      </div>
     </section>
 
     <!-- 快捷操作 -->
     <section class="px-5 mt-7">
       <h2 class="text-sm font-semibold text-ios-secondary mb-3 px-1">快捷操作</h2>
-      <div class="bg-ios-card rounded-3xl p-4 shadow-card grid grid-cols-4 gap-2">
+      <div class="bg-ios-card rounded-3xl p-4 shadow-card grid grid-cols-5 gap-2">
         <QuickActionButton
           v-for="a in quickActions"
           :key="a.label"

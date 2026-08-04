@@ -1,6 +1,9 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { BabyService, BabyVo } from './baby.service';
+import { BusinessException } from '../../common/exceptions/business.exception';
+import { ErrorCode } from '../../common/enums/error-code.enum';
 import { CreateBabyDto } from './dto/create-baby.dto';
 import { UpdateBabyDto } from './dto/update-baby.dto';
 
@@ -13,6 +16,17 @@ export class BabyController {
   @ApiOperation({ summary: '新增宝宝' })
   create(@Body() dto: CreateBabyDto): Promise<BabyVo> {
     return this.babyService.create(dto);
+  }
+
+  @Post(':id/avatar')
+  @ApiOperation({ summary: '上传/更换宝宝头像' })
+  @UseInterceptors(FileInterceptor('file'))
+  uploadAvatar(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<BabyVo> {
+    if (!file) throw new BusinessException(ErrorCode.PARAM_MISSING, '请上传头像文件');
+    return this.babyService.uploadAvatar(id, file.filename);
   }
 
   @Patch(':id')

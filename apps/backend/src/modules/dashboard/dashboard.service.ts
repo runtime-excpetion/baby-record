@@ -16,16 +16,20 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async overview(babyId: number) {
-    const [lastFeeding, lastDiaper, lastSleep] = await Promise.all([
+    const [lastFeeding, lastDiaper, lastSleep, latestTemperature] = await Promise.all([
       this.prisma.feeding.findFirst({ where: { babyId }, orderBy: { feedingTime: 'desc' } }),
       this.prisma.diaper.findFirst({ where: { babyId }, orderBy: { changeTime: 'desc' } }),
       this.prisma.sleep.findFirst({ where: { babyId }, orderBy: { startTime: 'desc' } }),
+      this.prisma.temperature.findFirst({ where: { babyId }, orderBy: { measureTime: 'desc' } }),
     ]);
 
     return {
       feeding: this.card(lastFeeding?.feedingTime),
       diaper: this.card(lastDiaper?.changeTime),
       sleep: this.card(lastSleep?.startTime),
+      latestTemperature: latestTemperature
+        ? { temperature: Number(latestTemperature.temperature), measureTime: latestTemperature.measureTime.toISOString() }
+        : null,
     };
   }
 

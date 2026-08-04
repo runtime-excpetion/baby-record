@@ -64,4 +64,9 @@ export class CreateBabyDto {
   @IsOptional()
   @IsString()
   remark?: string;
+
+  @ApiPropertyOptional({ description: '头像 URL（一般通过上传接口设置）' })
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 }

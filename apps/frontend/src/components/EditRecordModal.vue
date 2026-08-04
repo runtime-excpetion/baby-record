@@ -4,11 +4,13 @@ import { useMessage } from 'naive-ui';
 import { NInput, NInputNumber, NDatePicker } from 'naive-ui';
 import IconPicker from '@/components/form/IconPicker.vue';
 import DateTimePicker from '@/components/form/DateTimePicker.vue';
+import WheelPicker from '@/components/form/WheelPicker.vue';
 import { feedingApi } from '@/api/feeding';
 import { diaperApi } from '@/api/diaper';
 import { sleepApi } from '@/api/sleep';
 import { supplementApi } from '@/api/supplement';
 import { activityApi } from '@/api/activity';
+import { temperatureApi } from '@/api/temperature';
 import {
   FEEDING_TYPE_LABELS,
   DIAPER_TYPE_LABELS,
@@ -28,13 +30,14 @@ const sleepStart = ref(0);
 const sleepEnd = ref<number | null>(null);
 const remark = ref('');
 const feedingType = ref<FeedingType>('FORMULA');
-const amountMl = ref<number | null>(null);
+const amountMl = ref(120);
 const diaperType = ref<DiaperType>('BOTH');
 const supplementName = ref('');
 const amount = ref('');
 const unit = ref('');
 const eventType = ref('');
 const description = ref('');
+const temperature = ref(36.5);
 const submitting = ref(false);
 
 const feedingTypeOptions = ALL_FEEDING_TYPES.map((v) => ({
@@ -54,6 +57,7 @@ const titleMap: Record<TimelineEntry['type'], string> = {
   sleep: '睡眠',
   supplement: '补剂',
   activity: '事件',
+  temperature: '体温',
 };
 const entryTitle = computed(() => (props.entry ? titleMap[props.entry.type] : ''));
 
@@ -70,7 +74,7 @@ watch(
     if (e.type === 'feeding') {
       time.value = new Date(r.feedingTime as string).getTime();
       feedingType.value = r.feedingType as FeedingType;
-      amountMl.value = (r.amountMl as number | null) ?? null;
+      amountMl.value = (r.amountMl as number | null) ?? 120;
       remark.value = (r.remark as string) || '';
     } else if (e.type === 'diaper') {
       time.value = new Date(r.changeTime as string).getTime();
@@ -91,6 +95,10 @@ watch(
       eventType.value = r.eventType as string;
       description.value = (r.description as string) || '';
       remark.value = (r.remark as string) || '';
+    } else if (e.type === 'temperature') {
+      time.value = new Date(r.measureTime as string).getTime();
+      temperature.value = Number(r.temperature);
+      remark.value = (r.remark as string) || '';
     }
   },
   { immediate: true },
@@ -106,7 +114,7 @@ async function onSave() {
       await feedingApi.update(r.id, {
         feedingTime: iso(time.value),
         feedingType: feedingType.value,
-        amountMl: amountMl.value ?? undefined,
+        amountMl: amountMl.value,
         remark: remark.value || undefined,
       });
     } else if (e.type === 'diaper') {
@@ -136,6 +144,8 @@ async function onSave() {
         description: description.value || undefined,
         remark: remark.value || undefined,
       });
+    } else if (e.type === 'temperature') {
+      await temperatureApi.update(r.id, { temperature: temperature.value, measureTime: iso(time.value), remark: remark.value || undefined });
     }
     message.success('已更新');
     emit('saved');
@@ -191,10 +201,15 @@ async function onSave() {
             </div>
             <div class="bg-ios-card rounded-3xl p-4 shadow-card grid grid-cols-4 gap-2 items-center">
               <label class="text-sm font-medium text-ios-secondary col-span-1">奶量</label>
-              <NInputNumber v-model:value="amountMl" :min="0" :step="10" class="col-span-2" />
+              <WheelPicker v-model="amountMl" :options="Array.from({ length: 31 }, (_, i) => ({ label: `${i * 10} ml`, value: i * 10 }))" class="col-span-2" />
               <span class="text-sm text-ios-secondary text-center">ml</span>
             </div>
           </template>
+
+          <div v-if="entry.type === 'temperature'" class="bg-ios-card rounded-3xl p-4 shadow-card">
+            <label class="text-sm font-medium text-ios-secondary">体温</label>
+            <WheelPicker v-model="temperature" :options="Array.from({ length: 51 }, (_, i) => ({ label: `${(36 + i / 10).toFixed(1)}℃`, value: 36 + i / 10 }))" class="mt-2" />
+          </div>
 
           <div v-if="entry.type === 'diaper'" class="bg-ios-card rounded-3xl p-4 shadow-card">
             <label class="text-sm font-medium text-ios-secondary">类型</label>
@@ -207,7 +222,7 @@ async function onSave() {
               <NInput v-model:value="supplementName" class="mt-2" />
             </div>
             <div class="bg-ios-card rounded-3xl p-4 shadow-card grid grid-cols-3 gap-2">
-              <NInput v-model:value="amount" placeholder="剂量" class="col-span-2" />
+              <WheelPicker v-model="amount" :options="Array.from({ length: 11 }, (_, value) => ({ label: String(value), value: String(value) }))" class="col-span-2" />
               <NInput v-model:value="unit" placeholder="单位" />
             </div>
           </template>

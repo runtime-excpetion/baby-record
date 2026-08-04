@@ -12,6 +12,7 @@ export interface CreateBabyPayload {
   headCircumference?: number;
   birthHospital?: string;
   remark?: string;
+  avatar?: string;
 }
 
 export const babyApi = {

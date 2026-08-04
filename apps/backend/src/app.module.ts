@@ -10,6 +10,7 @@ import { DiaperModule } from './modules/diaper/diaper.module';
 import { SleepModule } from './modules/sleep/sleep.module';
 import { SupplementModule } from './modules/supplement/supplement.module';
 import { ActivityModule } from './modules/activity/activity.module';
+import { TemperatureModule } from './modules/temperature/temperature.module';
 import { RecordModule } from './modules/record/record.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -34,6 +35,7 @@ import { ChartModule } from './modules/chart/chart.module';
     SleepModule,
     SupplementModule,
     ActivityModule,
+    TemperatureModule,
     // 聚合层
     RecordModule,
     StatisticsModule,

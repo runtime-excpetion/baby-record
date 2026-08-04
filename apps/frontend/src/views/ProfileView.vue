@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { useMessage } from 'naive-ui';
+import { babyApi } from '@/api/baby';
 import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import TypeSegment from '@/components/form/TypeSegment.vue';
@@ -13,6 +15,8 @@ const userStore = useUserStore();
 const babyStore = useBabyStore();
 const themeStore = useThemeStore();
 const router = useRouter();
+const message = useMessage();
+const avatarInput = ref<HTMLInputElement | null>(null);
 
 const themeOptions: { label: string; value: ThemeMode }[] = [
   { label: '浅色', value: 'light' },
@@ -31,6 +35,23 @@ const babies = computed(() => babyStore.babies);
 function selectBaby(id: number) {
   babyStore.setCurrentBaby(id);
 }
+
+async function chooseAvatar(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file || !baby.value) return;
+  if (!file.type.startsWith('image/')) { message.warning('请选择图片文件'); return; }
+  if (file.size > 2 * 1024 * 1024) { message.warning('头像图片请小于 2MB'); return; }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const updated = await babyApi.update(baby.value!.id, { avatar: String(reader.result) });
+      babyStore.replaceBaby(updated);
+      message.success('头像已更新');
+    } catch { /* 请求层已提示 */ }
+  };
+  reader.readAsDataURL(file);
+  (event.target as HTMLInputElement).value = '';
+}
 </script>
 
 <template>
@@ -41,9 +62,12 @@ function selectBaby(id: number) {
     <section v-if="baby" class="px-5 mt-4">
       <div class="bg-gradient-to-br from-ios-blue to-ios-teal rounded-3xl p-5 shadow-soft text-white">
         <div class="flex items-center gap-3">
-          <div class="w-16 h-16 rounded-full bg-white/25 flex items-center justify-center text-4xl">
-            👶
-          </div>
+          <button class="relative w-16 h-16 rounded-full bg-white/25 flex items-center justify-center text-4xl overflow-hidden" @click="avatarInput?.click()">
+            <img v-if="baby.avatar" :src="baby.avatar" alt="宝宝头像" class="w-full h-full object-cover" />
+            <template v-else>👶</template>
+            <span class="absolute bottom-0 inset-x-0 text-[10px] leading-4 bg-black/30">更换</span>
+          </button>
+          <input ref="avatarInput" type="file" accept="image/*" capture="user" class="hidden" @change="chooseAvatar" />
           <div class="flex-1">
             <h2 class="text-xl font-bold">{{ baby.name }}</h2>
             <p v-if="baby.nickname" class="text-sm text-white/80">{{ baby.nickname }}</p>

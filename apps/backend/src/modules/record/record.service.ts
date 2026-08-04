@@ -29,12 +29,13 @@ export class RecordService {
   }
 
   private async collect(babyId: number, start: Date, end: Date) {
-    const [feeding, diaper, sleep, supplement, activity] = await Promise.all([
+    const [feeding, diaper, sleep, supplement, activity, temperature] = await Promise.all([
       this.prisma.feeding.findMany({ where: { babyId, feedingTime: { gte: start, lte: end } }, orderBy: { feedingTime: 'desc' } }),
       this.prisma.diaper.findMany({ where: { babyId, changeTime: { gte: start, lte: end } }, orderBy: { changeTime: 'desc' } }),
       this.prisma.sleep.findMany({ where: { babyId, startTime: { gte: start, lte: end } }, orderBy: { startTime: 'desc' } }),
       this.prisma.supplement.findMany({ where: { babyId, takeTime: { gte: start, lte: end } }, orderBy: { takeTime: 'desc' } }),
       this.prisma.activity.findMany({ where: { babyId, eventTime: { gte: start, lte: end } }, orderBy: { eventTime: 'desc' } }),
+      this.prisma.temperature.findMany({ where: { babyId, measureTime: { gte: start, lte: end } }, orderBy: { measureTime: 'desc' } }),
     ]);
     return {
       feeding: serialize(feeding),
@@ -42,6 +43,7 @@ export class RecordService {
       sleep: serialize(sleep),
       supplement: serialize(supplement),
       activity: serialize(activity),
+      temperature: serialize(temperature),
     };
   }
 }

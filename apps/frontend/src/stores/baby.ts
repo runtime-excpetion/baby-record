@@ -31,5 +31,11 @@ export const useBabyStore = defineStore('baby', () => {
     localStorage.setItem(CURRENT_BABY_KEY, String(id));
   }
 
-  return { babies, currentBabyId, currentBaby, loading, loadBabies, setCurrentBaby };
+  function replaceBaby(baby: BabyVo) {
+    const index = babies.value.findIndex((item) => item.id === baby.id);
+    if (index >= 0) babies.value.splice(index, 1, baby);
+    else babies.value.push(baby);
+  }
+
+  return { babies, currentBabyId, currentBaby, loading, loadBabies, setCurrentBaby, replaceBaby };
 });

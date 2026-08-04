@@ -68,6 +68,7 @@ export interface BabyVo {
   headCircumference: number | null;
   birthHospital: string | null;
   remark: string | null;
+  avatar: string | null;
   createdTime: string;
   updatedTime: string;
   age: AgeInfo;
@@ -90,6 +91,7 @@ export interface FeedingVo {
   remark: string | null;
   creatorId: number;
   createdTime: string;
+  updatedTime?: string;
 }
 
 export interface DiaperVo {
@@ -100,6 +102,7 @@ export interface DiaperVo {
   remark: string | null;
   creatorId: number;
   createdTime: string;
+  updatedTime?: string;
 }
 
 export interface SleepVo {
@@ -113,6 +116,7 @@ export interface SleepVo {
   remark: string | null;
   creatorId: number;
   createdTime: string;
+  updatedTime?: string;
 }
 
 export interface SupplementVo {
@@ -125,6 +129,7 @@ export interface SupplementVo {
   remark: string | null;
   creatorId: number;
   createdTime: string;
+  updatedTime?: string;
 }
 
 export interface ActivityVo {
@@ -136,6 +141,7 @@ export interface ActivityVo {
   remark: string | null;
   creatorId: number;
   createdTime: string;
+  updatedTime?: string;
 }
 
 // ============ API 通用 ============
@@ -166,6 +172,7 @@ export interface DashboardData {
   feeding: StatusCard;
   diaper: StatusCard;
   sleep: StatusCard;
+  latestTemperature: Pick<TemperatureVo, 'temperature' | 'measureTime'> | null;
 }
 
 // ============ 时间间隔分析 ============
@@ -229,6 +236,35 @@ export interface ChartResult {
   series: { name: string; data: number[] }[];
 }
 
+// ============ 体温 ============
+export interface TemperatureVo {
+  id: number;
+  babyId: number;
+  temperature: number;
+  measureTime: string;
+  remark: string | null;
+  creatorId: number;
+  createdTime: string;
+  updatedTime?: string;
+}
+
+export type TempStatus = 'normal' | 'watch' | 'fever' | 'high';
+
+/** 体温状态：正常<=37.0 / 关注37.0-37.3 / 发热37.3-37.9 / 高温>37.9 */
+export function getTempStatus(t: number): TempStatus {
+  if (t <= 37.0) return 'normal';
+  if (t <= 37.3) return 'watch';
+  if (t <= 37.9) return 'fever';
+  return 'high';
+}
+
+export const TEMP_STATUS_LABEL: Record<TempStatus, string> = {
+  normal: '正常',
+  watch: '关注',
+  fever: '发热',
+  high: '高温',
+};
+
 // ============ 聚合记录 ============
 export interface DailyRecords {
   feeding: FeedingVo[];
@@ -236,6 +272,7 @@ export interface DailyRecords {
   sleep: SleepVo[];
   supplement: SupplementVo[];
   activity: ActivityVo[];
+  temperature: TemperatureVo[];
 }
 
 // ============ 记录人本地缓存 ============

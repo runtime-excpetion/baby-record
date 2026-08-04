@@ -6,6 +6,7 @@ import { NInput } from 'naive-ui';
 import AppHeader from '@/components/AppHeader.vue';
 import TypeSegment from '@/components/form/TypeSegment.vue';
 import DateTimePicker from '@/components/form/DateTimePicker.vue';
+import WheelPicker from '@/components/form/WheelPicker.vue';
 import { supplementApi } from '@/api/supplement';
 import { activityApi } from '@/api/activity';
 import { useBabyStore } from '@/stores/baby';
@@ -34,7 +35,7 @@ const isSupplement = computed(() => category.value === 'supplement');
 const supplementName = ref('维生素D');
 const supplementNameOptions = ['维生素D', 'DHA', '钙', '其他'].map((v) => ({ label: v, value: v }));
 const customName = ref('');
-const amount = ref('');
+const amount = ref(1);
 const unit = ref('滴');
 const supplementTime = ref(Date.now());
 
@@ -71,7 +72,7 @@ async function onSubmit() {
       await supplementApi.create({
         babyId: baby.id,
         name,
-        amount: amount.value || undefined,
+        amount: String(amount.value),
         unit: unit.value || undefined,
         takeTime: new Date(supplementTime.value).toISOString(),
         creatorId: user.id,
@@ -135,8 +136,8 @@ async function onSubmit() {
         </div>
         <div class="bg-ios-card rounded-3xl p-4 shadow-card">
           <label class="text-sm font-medium text-ios-secondary">剂量</label>
-          <div class="mt-2 grid grid-cols-3 gap-2">
-            <NInput v-model:value="amount" placeholder="如 1" class="col-span-2" />
+          <div class="mt-2 grid grid-cols-3 gap-2 items-center">
+            <WheelPicker v-model="amount" :options="Array.from({ length: 11 }, (_, value) => ({ label: String(value), value }))" class="col-span-2" />
             <NInput v-model:value="unit" placeholder="单位" />
           </div>
         </div>
