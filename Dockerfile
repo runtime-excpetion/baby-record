@@ -31,14 +31,20 @@ RUN pnpm --filter @baby-record/backend build
 
 # ====== 阶段 3: 运行时（node + nginx 单镜像）======
 FROM node:22-alpine
+RUN corepack enable
 RUN apk add --no-cache nginx
 WORKDIR /app
 
-# 后端产物
-COPY --from=backend-builder /app/apps/backend/node_modules ./apps/backend/node_modules
+# 安装后端生产依赖（pnpm 在运行时重建 node_modules，避免构建期 symlink 跨阶段复制断裂）
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY apps/backend/package.json apps/backend/
+COPY packages/shared/package.json packages/shared/
+RUN pnpm install --filter @baby-record/backend --filter @baby-record/shared --prod
+
+# 后端编译产物 + schema + prisma generate 产物（含查询引擎）
 COPY --from=backend-builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=backend-builder /app/apps/backend/prisma ./apps/backend/prisma
-COPY --from=backend-builder /app/apps/backend/package.json ./apps/backend/
+COPY --from=backend-builder /app/apps/backend/node_modules/.prisma ./apps/backend/node_modules/.prisma
 
 # 前端产物
 COPY --from=frontend-builder /app/apps/frontend/dist /usr/share/nginx/html
