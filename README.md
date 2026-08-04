@@ -17,6 +17,7 @@
 - [环境变量](#环境变量)
 - [API 文档](#api-文档)
 - [数据库设计](#数据库设计)
+- [界面预览](#界面预览)
 - [相关文档](#相关文档)
 
 ---
@@ -200,6 +201,44 @@ pnpm dev           # 即 pnpm dev:frontend
 | `ai_analysis`（预留） | analysis_type, period_start/end, input(JSON), result(JSON) |
 
 ER 图见 [docs/er-diagram.md](./docs/er-diagram.md)，建表 SQL 见 [docs/schema.sql](./docs/schema.sql)。
+
+---
+
+## 界面预览
+
+> 以下为系统主要界面截图，直观展示各功能页面的实际效果。
+
+### 主页（仪表盘）
+
+![主页](./docs/主页.jpg)
+
+### 记录页面
+
+![记录页面](./docs/记录页面.jpg)
+
+### 喂养详情页
+
+![喂养详情页](./docs/喂养详情页.jpg)
+
+### 睡眠记录
+
+![睡眠记录](./docs/睡眠记录.jpg)
+
+### 纸尿裤更换
+
+![纸尿裤更换](./docs/纸尿裤更换.jpg)
+
+### 其他记录
+
+![其他记录](./docs/其他记录.jpg)
+
+### 宝贝信息页面
+
+![宝贝信息页面](./docs/宝贝信息页面.jpg)
+
+### 成长统计
+
+![成长统计](./docs/成长统计.jpg)
 
 ## 相关文档
 
