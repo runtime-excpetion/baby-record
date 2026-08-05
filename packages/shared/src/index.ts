@@ -81,6 +81,13 @@ export interface UserVo {
   createdTime: string;
 }
 
+/** 聚合记录中携带的创建用户概要。 */
+export interface RecordCreator {
+  id: number;
+  name: string;
+  role: UserRole;
+}
+
 export interface FeedingVo {
   id: number;
   babyId: number;
@@ -90,6 +97,7 @@ export interface FeedingVo {
   durationMinutes: number | null;
   remark: string | null;
   creatorId: number;
+  creator?: RecordCreator;
   createdTime: string;
   updatedTime?: string;
 }
@@ -101,6 +109,7 @@ export interface DiaperVo {
   type: DiaperType;
   remark: string | null;
   creatorId: number;
+  creator?: RecordCreator;
   createdTime: string;
   updatedTime?: string;
 }
@@ -115,6 +124,7 @@ export interface SleepVo {
   ongoing: boolean;
   remark: string | null;
   creatorId: number;
+  creator?: RecordCreator;
   createdTime: string;
   updatedTime?: string;
 }
@@ -128,6 +138,7 @@ export interface SupplementVo {
   takeTime: string;
   remark: string | null;
   creatorId: number;
+  creator?: RecordCreator;
   createdTime: string;
   updatedTime?: string;
 }
@@ -140,6 +151,7 @@ export interface ActivityVo {
   description: string | null;
   remark: string | null;
   creatorId: number;
+  creator?: RecordCreator;
   createdTime: string;
   updatedTime?: string;
 }
@@ -244,6 +256,7 @@ export interface TemperatureVo {
   measureTime: string;
   remark: string | null;
   creatorId: number;
+  creator?: RecordCreator;
   createdTime: string;
   updatedTime?: string;
 }

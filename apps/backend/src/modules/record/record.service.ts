@@ -29,13 +29,16 @@ export class RecordService {
   }
 
   private async collect(babyId: number, start: Date, end: Date) {
+    const includeCreator = {
+      creator: { select: { id: true, name: true, role: true } },
+    } as const;
     const [feeding, diaper, sleep, supplement, activity, temperature] = await Promise.all([
-      this.prisma.feeding.findMany({ where: { babyId, feedingTime: { gte: start, lte: end } }, orderBy: { feedingTime: 'desc' } }),
-      this.prisma.diaper.findMany({ where: { babyId, changeTime: { gte: start, lte: end } }, orderBy: { changeTime: 'desc' } }),
-      this.prisma.sleep.findMany({ where: { babyId, startTime: { gte: start, lte: end } }, orderBy: { startTime: 'desc' } }),
-      this.prisma.supplement.findMany({ where: { babyId, takeTime: { gte: start, lte: end } }, orderBy: { takeTime: 'desc' } }),
-      this.prisma.activity.findMany({ where: { babyId, eventTime: { gte: start, lte: end } }, orderBy: { eventTime: 'desc' } }),
-      this.prisma.temperature.findMany({ where: { babyId, measureTime: { gte: start, lte: end } }, orderBy: { measureTime: 'desc' } }),
+      this.prisma.feeding.findMany({ where: { babyId, feedingTime: { gte: start, lte: end } }, orderBy: { feedingTime: 'desc' }, include: includeCreator }),
+      this.prisma.diaper.findMany({ where: { babyId, changeTime: { gte: start, lte: end } }, orderBy: { changeTime: 'desc' }, include: includeCreator }),
+      this.prisma.sleep.findMany({ where: { babyId, startTime: { gte: start, lte: end } }, orderBy: { startTime: 'desc' }, include: includeCreator }),
+      this.prisma.supplement.findMany({ where: { babyId, takeTime: { gte: start, lte: end } }, orderBy: { takeTime: 'desc' }, include: includeCreator }),
+      this.prisma.activity.findMany({ where: { babyId, eventTime: { gte: start, lte: end } }, orderBy: { eventTime: 'desc' }, include: includeCreator }),
+      this.prisma.temperature.findMany({ where: { babyId, measureTime: { gte: start, lte: end } }, orderBy: { measureTime: 'desc' }, include: includeCreator }),
     ]);
     return {
       feeding: serialize(feeding),

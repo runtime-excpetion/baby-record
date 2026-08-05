@@ -16,9 +16,18 @@ import {
   FEEDING_TYPE_LABELS,
   DIAPER_TYPE_LABELS,
   SLEEP_TYPE_LABELS,
+  USER_ROLE_LABELS,
   type DailyRecords,
 } from '@baby-record/shared';
 import type { TimelineEntry } from '@/types/timeline';
+
+withDefaults(defineProps<{
+  title?: string;
+  showBack?: boolean;
+}>(), {
+  title: '历史记录',
+  showBack: true,
+});
 
 const babyStore = useBabyStore();
 const dialog = useDialog();
@@ -153,6 +162,12 @@ function isFuture(ts: number): boolean {
 }
 
 const filteredItems = computed(() => selectedType.value === 'all' ? items.value : items.value.filter((item) => item.type === selectedType.value));
+function creatorName(item: TimelineEntry): string {
+  return item.raw.creator?.name || '未知用户';
+}
+function creatorRole(item: TimelineEntry): string {
+  return item.raw.creator ? USER_ROLE_LABELS[item.raw.creator.role] : '未知用户';
+}
 const typeOptions: { label: string; value: 'all' | TimelineEntry['type'] }[] = [
   { label: '全部', value: 'all' }, { label: '喂养', value: 'feeding' }, { label: '纸尿裤', value: 'diaper' },
   { label: '睡眠', value: 'sleep' }, { label: '补剂', value: 'supplement' }, { label: '活动', value: 'activity' }, { label: '体温', value: 'temperature' },
@@ -163,7 +178,9 @@ watch(dateRange, load, { deep: true });
 
 <template>
   <div>
-    <AppHeader title="历史记录" show-back />
+    <AppHeader :title="title" :show-back="showBack" />
+
+    <slot name="prepend" />
 
     <div class="px-5 mt-4">
       <div class="bg-ios-card rounded-3xl p-4 shadow-card">
@@ -201,7 +218,9 @@ watch(dateRange, load, { deep: true });
                 删除
               </button>
             </div>
-            <p v-if="it.detail" class="text-xs text-ios-secondary mt-1">{{ it.detail }}</p>
+            <p class="text-xs text-ios-secondary mt-1">
+              <template v-if="it.detail">{{ it.detail }} · </template>{{ creatorRole(it) }}（添加）
+            </p>
           </div>
         </div>
       </TransitionGroup>
@@ -216,6 +235,7 @@ watch(dateRange, load, { deep: true });
           <div class="bg-ios-card rounded-2xl p-4 space-y-3 text-sm">
             <div class="flex justify-between gap-4"><span class="text-ios-secondary">记录时间</span><span class="text-ios-label">{{ new Date(detailEntry.time).toLocaleString('zh-CN', { hour12: false }) }}</span></div>
             <div class="flex justify-between gap-4"><span class="text-ios-secondary">完整内容</span><span class="text-ios-label text-right">{{ detailEntry.detail || '—' }}</span></div>
+            <div class="flex justify-between gap-4"><span class="text-ios-secondary">添加人</span><span class="text-ios-label">{{ creatorName(detailEntry) }} · {{ creatorRole(detailEntry) }}</span></div>
             <div class="flex justify-between gap-4"><span class="text-ios-secondary">创建时间</span><span class="text-ios-label">{{ new Date(detailEntry.raw.createdTime).toLocaleString('zh-CN', { hour12: false }) }}</span></div>
             <div class="flex justify-between gap-4"><span class="text-ios-secondary">更新时间</span><span class="text-ios-label">{{ detailEntry.raw.updatedTime ? new Date(detailEntry.raw.updatedTime).toLocaleString('zh-CN', { hour12: false }) : '未修改' }}</span></div>
           </div>
