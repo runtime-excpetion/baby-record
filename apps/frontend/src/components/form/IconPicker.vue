@@ -1,15 +1,19 @@
 <script setup lang="ts" generic="T extends string">
-defineProps<{
-  modelValue: T;
-  options: { label: string; value: T; icon: string }[];
-  activeColor?: string;
-}>();
+withDefaults(
+  defineProps<{
+    modelValue: T;
+    options: { label: string; value: T; icon: string }[];
+    activeColor?: string;
+    cols?: number;
+  }>(),
+  { cols: 3 },
+);
 
 defineEmits<{ 'update:modelValue': [value: T] }>();
 </script>
 
 <template>
-  <div class="grid grid-cols-3 gap-2">
+  <div class="grid gap-2" :class="cols === 2 ? 'grid-cols-2' : 'grid-cols-3'">
     <button
       v-for="opt in options"
       :key="opt.value"

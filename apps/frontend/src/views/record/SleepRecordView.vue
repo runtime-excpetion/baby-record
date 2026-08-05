@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMessage } from 'naive-ui';
 import AppHeader from '@/components/AppHeader.vue';
-import TypeSegment from '@/components/form/TypeSegment.vue';
+import IconPicker from '@/components/form/IconPicker.vue';
 import { useRecordStore } from '@/stores/record';
 import { useBabyStore } from '@/stores/baby';
 import { fmtTime, minutesSince, minutesToText } from '@/utils/format';
@@ -14,7 +14,14 @@ const message = useMessage();
 const recordStore = useRecordStore();
 const babyStore = useBabyStore();
 
-const sleepType = ref<SleepType>('NIGHT');
+// 按当前时间默认选择睡眠类型：6:00-18:00 白天，18:01-5:59 夜间
+function defaultSleepType(): SleepType {
+  const d = new Date();
+  const minutesOfDay = d.getHours() * 60 + d.getMinutes();
+  return minutesOfDay >= 6 * 60 && minutesOfDay <= 18 * 60 ? 'DAYTIME' : 'NIGHT';
+}
+
+const sleepType = ref<SleepType>(defaultSleepType());
 const now = ref(Date.now());
 let timer: ReturnType<typeof setInterval>;
 
@@ -101,7 +108,7 @@ async function onEnd() {
       <div v-else class="space-y-3">
         <div class="bg-ios-card rounded-3xl p-4 shadow-card">
           <label class="text-sm font-medium text-ios-secondary">睡眠类型</label>
-          <TypeSegment v-model="sleepType" :options="sleepTypeOptions" class="mt-2" />
+          <IconPicker v-model="sleepType" :options="sleepTypeOptions" active-color="bg-ios-purple" :cols="2" class="mt-3" />
         </div>
         <div class="bg-ios-card rounded-3xl p-6 shadow-card text-center">
           <div class="text-5xl mb-3">🌙</div>
