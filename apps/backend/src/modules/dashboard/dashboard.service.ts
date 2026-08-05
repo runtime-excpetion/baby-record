@@ -26,7 +26,8 @@ export class DashboardService {
     return {
       feeding: this.card(lastFeeding?.feedingTime),
       diaper: this.card(lastDiaper?.changeTime),
-      sleep: this.card(lastSleep?.startTime),
+      // 睡眠间隔起点：已结束取 endTime，进行中（endTime 为 null）回退取 startTime
+      sleep: this.card(lastSleep ? (lastSleep.endTime ?? lastSleep.startTime) : null),
       latestTemperature: latestTemperature
         ? { temperature: Number(latestTemperature.temperature), measureTime: latestTemperature.measureTime.toISOString() }
         : null,
