@@ -9,6 +9,7 @@ import { chartApi } from '@/api/chart';
 import { statisticsApi, type StatsParams } from '@/api/statistics';
 import { useBabyStore } from '@/stores/baby';
 import { fmtDate } from '@/utils/format';
+import { isFutureDate } from '@/utils/date-picker';
 import type { ChartResult, SupplementStats } from '@baby-record/shared';
 
 const babyStore = useBabyStore();
@@ -201,9 +202,9 @@ watch([range, startDate, endDate], loadAll);
       <div class="bg-ios-card rounded-3xl p-4 shadow-card">
         <TypeSegment v-model="range" :options="rangeOptions" />
         <div v-if="range === 'custom'" class="mt-3 flex items-center gap-2">
-          <NDatePicker v-model:value="startDate" type="date" class="flex-1" />
+          <NDatePicker v-model:value="startDate" type="date" class="flex-1" :is-date-disabled="isFutureDate" />
           <span class="text-ios-secondary text-sm">至</span>
-          <NDatePicker v-model:value="endDate" type="date" class="flex-1" />
+          <NDatePicker v-model:value="endDate" type="date" class="flex-1" :is-date-disabled="isFutureDate" />
         </div>
       </div>
 

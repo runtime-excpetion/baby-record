@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useMessage } from 'naive-ui';
-import { NInput, NInputNumber, NDatePicker } from 'naive-ui';
+import { NInput, NInputNumber } from 'naive-ui';
 import IconPicker from '@/components/form/IconPicker.vue';
 import DateTimePicker from '@/components/form/DateTimePicker.vue';
 import WheelPicker from '@/components/form/WheelPicker.vue';
@@ -182,14 +182,7 @@ async function onSave() {
             </div>
             <div class="bg-ios-card rounded-3xl p-4 shadow-card">
               <label class="text-sm font-medium text-ios-secondary">结束时间</label>
-              <NDatePicker
-                v-model:value="sleepEnd"
-                type="datetime"
-                format="yyyy-MM-dd HH:mm"
-                :time-picker-props="{ format: 'HH:mm' }"
-                clearable
-                class="mt-2 w-full"
-              />
+              <DateTimePicker v-model="sleepEnd" clearable class="mt-2 w-full" />
               <p class="text-xs text-ios-secondary mt-1">不填表示睡眠中</p>
             </div>
           </template>

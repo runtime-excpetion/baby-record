@@ -12,6 +12,7 @@ import { activityApi } from '@/api/activity';
 import { temperatureApi } from '@/api/temperature';
 import { useBabyStore } from '@/stores/baby';
 import { fmtTime, fmtDate, minutesToText } from '@/utils/format';
+import { isFutureDate } from '@/utils/date-picker';
 import {
   FEEDING_TYPE_LABELS,
   DIAPER_TYPE_LABELS,
@@ -153,14 +154,6 @@ async function removeEntry(e: TimelineEntry) {
   });
 }
 
-// 按日历日比较：只禁用「明天及以后」，今天可选。
-// 用毫秒级 Date.now() 比较会把今天 00:00 之后的所有时刻误判为未来。
-function isFuture(ts: number): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return ts >= today.getTime() + 24 * 60 * 60 * 1000;
-}
-
 const filteredItems = computed(() => selectedType.value === 'all' ? items.value : items.value.filter((item) => item.type === selectedType.value));
 function creatorName(item: TimelineEntry): string {
   return item.raw.creator?.name || '未知用户';
@@ -185,7 +178,7 @@ watch(dateRange, load, { deep: true });
     <div class="px-5 mt-4">
       <div class="bg-ios-card rounded-3xl p-4 shadow-card">
         <p class="text-sm font-medium text-ios-secondary mb-2">时间范围</p>
-        <NDatePicker v-model:value="dateRange" type="daterange" class="w-full" :is-date-disabled="isFuture" clearable />
+        <NDatePicker v-model:value="dateRange" type="daterange" class="w-full" :is-date-disabled="isFutureDate" clearable />
         <div class="flex gap-2 overflow-x-auto no-scrollbar mt-3">
           <button v-for="option in typeOptions" :key="option.value" class="shrink-0 px-3 py-1.5 rounded-xl text-xs" :class="selectedType === option.value ? 'bg-ios-blue text-white' : 'bg-ios-fill text-ios-secondary'" @click="selectedType = option.value">{{ option.label }}</button>
         </div>

@@ -7,6 +7,7 @@ import AppHeader from '@/components/AppHeader.vue';
 import TypeSegment from '@/components/form/TypeSegment.vue';
 import { babyApi } from '@/api/baby';
 import { useBabyStore } from '@/stores/baby';
+import { isFutureDate } from '@/utils/date-picker';
 import { GENDER_LABELS, type Gender } from '@baby-record/shared';
 
 const router = useRouter();
@@ -32,10 +33,6 @@ const genderOptions: { label: string; value: Gender }[] = [
   { label: GENDER_LABELS.MALE, value: 'MALE' },
   { label: GENDER_LABELS.FEMALE, value: 'FEMALE' },
 ];
-
-function isFuture(ts: number): boolean {
-  return ts > Date.now();
-}
 
 onMounted(() => {
   if (isEdit.value && babyStore.currentBaby) {
@@ -117,7 +114,7 @@ async function onSubmit() {
           type="date"
           format="yyyy-MM-dd"
           class="mt-2 w-full"
-          :is-date-disabled="isFuture"
+          :is-date-disabled="isFutureDate"
         />
       </div>
 

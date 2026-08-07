@@ -16,11 +16,12 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async overview(babyId: number) {
+    const now = new Date();
     const [lastFeeding, lastDiaper, lastSleep, latestTemperature] = await Promise.all([
-      this.prisma.feeding.findFirst({ where: { babyId }, orderBy: { feedingTime: 'desc' } }),
-      this.prisma.diaper.findFirst({ where: { babyId }, orderBy: { changeTime: 'desc' } }),
-      this.prisma.sleep.findFirst({ where: { babyId }, orderBy: { startTime: 'desc' } }),
-      this.prisma.temperature.findFirst({ where: { babyId }, orderBy: { measureTime: 'desc' } }),
+      this.prisma.feeding.findFirst({ where: { babyId, feedingTime: { lte: now } }, orderBy: { feedingTime: 'desc' } }),
+      this.prisma.diaper.findFirst({ where: { babyId, changeTime: { lte: now } }, orderBy: { changeTime: 'desc' } }),
+      this.prisma.sleep.findFirst({ where: { babyId, startTime: { lte: now } }, orderBy: { startTime: 'desc' } }),
+      this.prisma.temperature.findFirst({ where: { babyId, measureTime: { lte: now } }, orderBy: { measureTime: 'desc' } }),
     ]);
 
     return {
