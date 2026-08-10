@@ -32,11 +32,9 @@ export default {
       },
       fontFamily: {
         sans: [
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'SF Pro Text',
-          'SF Pro Display',
-          'Helvetica Neue',
+          'Baby Latin Rounded',
+          'Noto Sans SC',
+          'Noto Sans CJK SC',
           'PingFang SC',
           'Microsoft YaHei',
           'sans-serif',

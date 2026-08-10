@@ -108,8 +108,9 @@ baby-record-system
 **连接外部 PostgreSQL（默认）**：
 
 ```bash
-# 修改 docker-compose.yml 中 app.environment 的 DATABASE_* 为你的数据库地址
-export BABY_RECORD_PASSWORD='请替换为强密码'
+# 复制部署配置并填写访问密码、数据库地址和数据库凭据
+cp .env.example .env
+# 编辑 .env
 docker compose up -d --build
 # 访问 http://localhost:8080
 ```

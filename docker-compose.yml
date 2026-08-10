@@ -1,11 +1,9 @@
 # 宝宝成长记录系统 · 整项目单镜像 docker-compose
 #
-# 一键启动（内置 PostgreSQL，自动建表 + 种子数据 + 前后端）：
-#   docker compose up -d --build
+# 一键启动（外部 PostgreSQL + 前后端）：
+#   cp .env.example .env
+#   编辑 .env 后执行 docker compose up -d --build
 #   访问 http://localhost:8080
-#
-# 连接外部 PostgreSQL：
-#   注释掉 postgres 服务与 app.depends_on，并将 app.environment 的 DATABASE_* 改为外部地址。
 
 services:
   app:
@@ -19,37 +17,37 @@ services:
       - APP_PORT=3000
       - API_PREFIX=api/v1
       - SWAGGER_PATH=docs
-      # 必须在宿主机环境或项目 .env 中设置，不写入镜像
       - BABY_RECORD_PASSWORD=${BABY_RECORD_PASSWORD:?BABY_RECORD_PASSWORD is required}
-      - BABY_RECORD_SESSION_DAYS=30
-      # 当前 compose 默认通过 HTTP 访问；配置 HTTPS 反代后请改为 true
+      - BABY_RECORD_SESSION_DAYS=${BABY_RECORD_SESSION_DAYS:-30}
       - BABY_RECORD_COOKIE_SECURE=${BABY_RECORD_COOKIE_SECURE:-false}
-      - DATABASE_HOST=${DATABASE_HOST:-postgres}
-      - DATABASE_PORT=${DATABASE_PORT:-5432}
-      - DATABASE_NAME=${DATABASE_NAME:-baby_record}
-      - DATABASE_USERNAME=${DATABASE_USERNAME:-baby_record}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-change-this-database-password}
-      - DATABASE_URL=${DATABASE_URL:-postgresql://baby_record:change-this-database-password@postgres:5432/baby_record?schema=public}
+      - DATABASE_HOST=${DATABASE_HOST:?DATABASE_HOST is required}
+      - DATABASE_PORT=${DATABASE_PORT:-3308}
+      - DATABASE_NAME=${DATABASE_NAME:-baby-db}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:?DATABASE_USERNAME is required}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
+      # 后端根据以上分项配置生成 DATABASE_URL，避免端口或数据库名称不一致
+      - DATABASE_URL=
+
+    # 启用内置 PostgreSQL 时取消以下注释
     # depends_on:
     #   postgres:
     #     condition: service_healthy
 
-  # 可选：内置 PostgreSQL（连接外部数据库时注释掉整个 postgres 服务）
   # postgres:
   #   image: postgres:15-alpine
   #   container_name: baby-record-pg
   #   restart: unless-stopped
   #   environment:
-  #     POSTGRES_DB: ${DATABASE_NAME:-baby_record}
+  #     POSTGRES_DB: ${DATABASE_NAME:-baby-db}
   #     POSTGRES_USER: ${DATABASE_USERNAME:-baby_record}
-  #     POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change-this-database-password}
+  #     POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
   #   ports:
   #     - "3308:5432"
   #   volumes:
   #     - baby-pgdata:/var/lib/postgresql/data
   #     - ./docs/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
   #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-baby_record} -d ${DATABASE_NAME:-baby_record}"]
+  #     test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-baby_record} -d ${DATABASE_NAME:-baby-db}"]
   #     interval: 3s
   #     timeout: 3s
   #     retries: 10
