@@ -237,17 +237,32 @@ const sleepAdvice = computed(() => {
           </button>
         </template>
       </StatCard>
-      <div class="bg-ios-card rounded-3xl p-4 shadow-card">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl">🌡️</span>
-          <div class="flex-1">
-            <p class="text-sm font-medium text-ios-secondary">宝宝最新体温</p>
-            <p v-if="latestTemperature" class="text-xl num-display mt-1" :class="temperatureClass">{{ latestTemperature.temperature.toFixed(1) }}℃</p>
-            <p v-else class="text-sm text-ios-secondary mt-1">暂无体温记录</p>
+      <div class="bg-ios-card rounded-3xl p-5 shadow-card animate-slide-up">
+        <div class="flex items-center gap-2">
+          <div class="flex flex-1 items-center gap-2">
+            <span class="text-xl">🌡️</span>
+            <span class="text-sm font-medium text-ios-secondary">宝宝最新体温</span>
           </div>
-          <button class="text-sm text-ios-pink font-medium" @click="router.push('/record/temperature')">记录</button>
+          <button
+            type="button"
+            class="text-sm font-medium text-ios-pink active:opacity-60"
+            @click="router.push('/record/temperature')"
+          >
+            记录
+          </button>
         </div>
-        <div v-if="latestTemperature && latestTemperature.temperature > 37.2" class="mt-3 rounded-2xl bg-ios-orange/10 p-3 text-sm text-ios-orange">
+        <p
+          v-if="latestTemperature"
+          class="mt-3 text-3xl font-bold num-display"
+          :class="temperatureClass"
+        >
+          {{ latestTemperature.temperature.toFixed(1) }}℃
+        </p>
+        <p v-else class="mt-3 text-sm text-ios-secondary">暂无体温记录</p>
+        <div
+          v-if="latestTemperature && latestTemperature.temperature > 37.2"
+          class="mt-3 rounded-2xl bg-ios-orange/10 p-3 text-sm text-ios-orange"
+        >
           <p class="font-semibold">宝宝体温需要关注</p>
           <p class="text-xs mt-1">请在宝宝平稳状态下进行测量</p>
         </div>
