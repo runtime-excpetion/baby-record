@@ -1,0 +1,16 @@
+[
+  { "minMonth": 0, "maxMonth": 1, "recommendedWakeMinutes": 45, "maxWakeMinutes": 60 },
+  { "minMonth": 2, "maxMonth": 3, "recommendedWakeMinutes": 60, "maxWakeMinutes": 90 },
+  { "minMonth": 4, "maxMonth": 4, "recommendedWakeMinutes": 75, "maxWakeMinutes": 105 },
+  { "minMonth": 5, "maxMonth": 5, "recommendedWakeMinutes": 90, "maxWakeMinutes": 135 },
+  { "minMonth": 6, "maxMonth": 6, "recommendedWakeMinutes": 120, "maxWakeMinutes": 150 },
+  { "minMonth": 7, "maxMonth": 7, "recommendedWakeMinutes": 135, "maxWakeMinutes": 165 },
+  { "minMonth": 8, "maxMonth": 8, "recommendedWakeMinutes": 135, "maxWakeMinutes": 180 },
+  { "minMonth": 9, "maxMonth": 9, "recommendedWakeMinutes": 150, "maxWakeMinutes": 180 },
+  { "minMonth": 10, "maxMonth": 10, "recommendedWakeMinutes": 180, "maxWakeMinutes": 210 },
+  { "minMonth": 11, "maxMonth": 12, "recommendedWakeMinutes": 180, "maxWakeMinutes": 240 },
+  { "minMonth": 13, "maxMonth": 17, "recommendedWakeMinutes": 240, "maxWakeMinutes": 360 },
+  { "minMonth": 18, "maxMonth": 24, "recommendedWakeMinutes": 300, "maxWakeMinutes": 360 },
+  { "minMonth": 25, "maxMonth": 36, "recommendedWakeMinutes": 330, "maxWakeMinutes": 420 },
+  { "minMonth": 37, "maxMonth": 48, "recommendedWakeMinutes": 360, "maxWakeMinutes": 480 }
+]

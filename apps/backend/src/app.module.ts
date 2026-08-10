@@ -16,6 +16,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { IntervalModule } from './modules/interval/interval.module';
 import { ChartModule } from './modules/chart/chart.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ChartModule } from './modules/chart/chart.module';
       validationOptions: { allowUnknown: true, abortEarly: false },
     }),
     PrismaModule,
+    AuthModule,
     // 基础
     BabyModule,
     UserModule,

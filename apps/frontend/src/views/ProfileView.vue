@@ -8,12 +8,14 @@ import TypeSegment from '@/components/form/TypeSegment.vue';
 import { useUserStore } from '@/stores/user';
 import { useBabyStore } from '@/stores/baby';
 import { useThemeStore } from '@/stores/theme';
+import { useAuthStore } from '@/stores/auth';
 import type { ThemeMode } from '@/stores/theme';
 import { GENDER_LABELS, USER_ROLE_LABELS } from '@baby-record/shared';
 
 const userStore = useUserStore();
 const babyStore = useBabyStore();
 const themeStore = useThemeStore();
+const authStore = useAuthStore();
 const router = useRouter();
 const message = useMessage();
 const avatarInput = ref<HTMLInputElement | null>(null);
@@ -51,6 +53,12 @@ async function chooseAvatar(event: Event) {
   };
   reader.readAsDataURL(file);
   (event.target as HTMLInputElement).value = '';
+}
+
+async function logout() {
+  await authStore.logout();
+  userStore.clearUser();
+  await router.replace('/login');
 }
 </script>
 
@@ -181,6 +189,15 @@ async function chooseAvatar(event: Event) {
         @click="router.push('/baby/new')"
       >
         + 新增宝宝
+      </button>
+    </section>
+
+    <section class="px-5 mt-4">
+      <button
+        class="w-full py-3.5 rounded-2xl bg-ios-card text-ios-pink font-semibold shadow-card active:scale-95 transition-transform"
+        @click="logout"
+      >
+        退出登录
       </button>
     </section>
 

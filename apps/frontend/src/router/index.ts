@@ -1,7 +1,14 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import { useAuthStore } from '@/stores/auth';
+import { useBabyStore } from '@/stores/baby';
 
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/LoginView.vue'),
+  },
   {
     path: '/',
     component: () => import('@/layouts/AppLayout.vue'),
@@ -95,10 +102,26 @@ const router = createRouter({
   },
 });
 
-// 首次进入身份选择守卫
-router.beforeEach((to) => {
+// 先校验服务端访问会话，再处理本地记录人身份选择
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore();
   const userStore = useUserStore();
-  if (!userStore.hasIdentity && to.name !== 'onboarding') {
+  const authenticated = await authStore.ensureChecked();
+
+  if (!authenticated && to.name !== 'login') {
+    return { name: 'login', query: { redirect: to.fullPath } };
+  }
+  if (authenticated && to.name === 'login') {
+    return { name: userStore.hasIdentity ? 'dashboard' : 'onboarding' };
+  }
+  // 刷新或直接打开深层路由时，确保页面挂载前已有宝宝上下文。
+  if (authenticated && userStore.hasIdentity) {
+    const babyStore = useBabyStore();
+    if (!babyStore.babies.length && !babyStore.loading) {
+      await babyStore.loadBabies();
+    }
+  }
+  if (!userStore.hasIdentity && to.name !== 'onboarding' && to.name !== 'login') {
     return { name: 'onboarding' };
   }
   if (userStore.hasIdentity && to.name === 'onboarding') {

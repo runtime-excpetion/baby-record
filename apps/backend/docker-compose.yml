@@ -4,7 +4,7 @@
 #   docker-compose up -d --build
 #   内置 PostgreSQL 自动建表（挂载 docs/schema.sql），应用连接内置数据库。
 #
-# 模式 B（连接外部 PostgreSQL，如 192.168.28.30:3308）：
+# 模式 B（连接外部 PostgreSQL）：
 #   注释掉 postgres 服务与 depends_on，并将 app.environment 中的数据库连接改为外部地址，
 #   或改用 env_file: .env（需先 cp .env.example .env 并填写）。
 
@@ -14,9 +14,9 @@ services:
     container_name: baby-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: baby-db
-      POSTGRES_USER: baby_user
-      POSTGRES_PASSWORD: Common@123
+      POSTGRES_DB: ${DATABASE_NAME:-baby_record}
+      POSTGRES_USER: ${DATABASE_USERNAME:-baby_record}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change-this-database-password}
     ports:
       - "3308:5432"
     volumes:
@@ -34,12 +34,15 @@ services:
       - APP_PORT=3000
       - API_PREFIX=api/v1
       - SWAGGER_PATH=docs
+      - BABY_RECORD_PASSWORD=${BABY_RECORD_PASSWORD:?BABY_RECORD_PASSWORD is required}
+      - BABY_RECORD_SESSION_DAYS=${BABY_RECORD_SESSION_DAYS:-30}
+      - BABY_RECORD_COOKIE_SECURE=${BABY_RECORD_COOKIE_SECURE:-false}
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
-      - DATABASE_NAME=baby-db
-      - DATABASE_USERNAME=baby_user
-      - DATABASE_PASSWORD=Common@123
-      - DATABASE_URL=postgresql://baby_user:Common%40123@postgres:5432/baby-db?schema=public
+      - DATABASE_NAME=${DATABASE_NAME:-baby_record}
+      - DATABASE_USERNAME=${DATABASE_USERNAME:-baby_record}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-change-this-database-password}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://baby_record:change-this-database-password@postgres:5432/baby_record?schema=public}
     depends_on:
       - postgres
 

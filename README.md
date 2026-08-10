@@ -30,6 +30,8 @@
 - 🧩 **领域驱动模块化**：每个业务域自成 NestJS 模块，统计 / 仪表盘 / 间隔分析作为只读聚合层复用底层事件。
 - 🗄️ **原始事件优先**：保留完整原始事件（不丢弃字段、不只存聚合结果），为生长曲线与 AI 分析留足数据底座。
 - 🛡️ **统一契约**：统一响应格式 `{ code, message, data }`、统一异常处理、全局 DTO 校验、Swagger 自动文档。
+- 🔐 **访问认证**：部署密码由环境变量注入，服务端签发带有效期的 HttpOnly Cookie，业务 API 默认全部受保护。
+- 💤 **智能哄睡提醒**：按宝宝月龄和最近醒来时间实时显示正常清醒、进入哄睡窗口或清醒过久状态。
 - 🐳 **一键部署**：多阶段构建的单镜像，内置 nginx 反代 + Node 运行时，自动建表与种子数据。
 
 ---
@@ -107,6 +109,7 @@ baby-record-system
 
 ```bash
 # 修改 docker-compose.yml 中 app.environment 的 DATABASE_* 为你的数据库地址
+export BABY_RECORD_PASSWORD='请替换为强密码'
 docker compose up -d --build
 # 访问 http://localhost:8080
 ```
@@ -171,6 +174,11 @@ pnpm dev           # 即 pnpm dev:frontend
 | `NODE_ENV` | `development` | 运行环境 |
 | `API_PREFIX` | `api/v1` | API 全局前缀 |
 | `SWAGGER_PATH` | `docs` | Swagger 文档路径 |
+| `BABY_RECORD_PASSWORD` | — | 必填，项目访问密码，至少 6 位；不可写入前端或提交到仓库 |
+| `BABY_RECORD_AUTH_SECRET` | 默认使用访问密码派生 | 可选会话签名密钥，至少 32 位；修改后已有会话失效 |
+| `BABY_RECORD_SESSION_DAYS` | `30` | 登录状态有效天数，范围 1–365 |
+| `BABY_RECORD_COOKIE_SECURE` | 生产环境默认 `true` | HTTPS 部署设为 `true`；直接使用 HTTP 时设为 `false` |
+| `CORS_ORIGIN` | `http://localhost:5173` | 本地前端开发源，允许携带认证 Cookie |
 
 ### 前端（`apps/frontend/.env`）
 
@@ -200,6 +208,7 @@ pnpm dev           # 即 pnpm dev:frontend
 | statistics | `/statistics` | 区间统计（today/7d/30d/custom） |
 | dashboard | `/dashboard` | 仪表盘概览 |
 | chart | `/charts` | 可视化图表数据 |
+| auth | `/auth/login`、`/auth/status`、`/auth/logout` | 项目访问认证（公开接口） |
 
 ## 数据库设计
 
@@ -220,6 +229,19 @@ pnpm dev           # 即 pnpm dev:frontend
 | `ai_analysis`（预留） | analysis_type, period_start/end, input(JSON), result(JSON) |
 
 ER 图见 [docs/er-diagram.md](./docs/er-diagram.md)，建表 SQL 见 [docs/schema.sql](./docs/schema.sql)。
+
+## 清醒窗口与提醒规则
+
+清醒窗口保存在 `apps/backend/src/config/wake-windows.json`，与业务计算代码分离。首页以最后一次已结束睡眠的 `endTime` 作为醒来时间：到达区间下限前显示绿色，到达下限后显示蓝色，超过区间上限显示红色；页面每 30 秒自动重算。
+
+参考区间主要来自 [CHOC Children's Health：Babies and sleep](https://health.choc.org/babies-and-sleep-the-ultimate-guide/)；[Cleveland Clinic](https://health.clevelandclinic.org/wake-windows-by-age) 同时强调不同宝宝及同一宝宝每天的清醒窗口都可能不同，应结合打哈欠、揉眼、活动减少等困倦信号判断。此功能仅作日常参考，不能替代儿科医生建议。
+
+### 验证方法
+
+1. 不带 Cookie 请求 `GET /api/v1/babies`，应返回 HTTP 401。
+2. 向 `POST /api/v1/auth/login` 提交错误密码，页面应显示“密码错误”；提交正确密码后应进入系统并收到 HttpOnly Cookie。
+3. 刷新或关闭后重新打开浏览器，应在有效期内保持登录；在“我的”点击退出后应回到登录页。
+4. 修改最近一条睡眠的结束时间，分别模拟小于推荐下限、介于上下限、超过上限，首页圆点应依次为绿色、蓝色、红色，并在不刷新页面时自动切换。
 
 ## 相关文档
 

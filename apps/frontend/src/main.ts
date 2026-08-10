@@ -3,7 +3,6 @@ import { createPinia } from 'pinia';
 import router from './router';
 import App from './App.vue';
 import { useUserStore } from './stores/user';
-import { useBabyStore } from './stores/baby';
 import { useThemeStore } from './stores/theme';
 import './style.css';
 
@@ -16,12 +15,8 @@ app.use(router);
 const themeStore = useThemeStore();
 themeStore.apply();
 
-// 恢复身份 + 预加载宝宝
+// 恢复本地记录人身份；宝宝数据在认证守卫通过后由页面加载
 const userStore = useUserStore();
 userStore.loadFromStorage();
-if (userStore.hasIdentity) {
-  const babyStore = useBabyStore();
-  babyStore.loadBabies();
-}
 
 app.mount('#app');

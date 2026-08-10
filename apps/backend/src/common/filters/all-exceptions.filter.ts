@@ -37,7 +37,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
           // 业务异常自带错误码
           code = Number(r.code);
           message = (r.message as string) || message;
-          httpStatus = HttpStatus.OK; // 业务错误统一返回 200 + 错误码
+          // 鉴权失败必须保留真实 HTTP 401，其余历史业务错误维持 200 契约
+          httpStatus = code === ErrorCode.UNAUTHORIZED ? HttpStatus.UNAUTHORIZED : HttpStatus.OK;
         } else if (r.message) {
           // class-validator 校验异常：{ message: string[], error }
           code = ErrorCode.PARAM_INVALID;

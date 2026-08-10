@@ -7,6 +7,9 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AuthService } from './modules/auth/auth.service';
+import { ErrorCode } from './common/enums/error-code.enum';
+import { NextFunction, Request, Response } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -36,8 +39,24 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // 跨域
-  app.enableCors();
+  // 开发环境支持前后端跨域携带认证 Cookie；生产环境默认同源访问
+  app.enableCors({
+    origin: configService.get<string>('app.corsOrigin'),
+    credentials: true,
+  });
+
+  // 宝宝头像同样属于私有数据；静态资源不经过 Nest Guard，需要显式校验会话
+  const authService = app.get(AuthService);
+  app.use('/uploads', (request: Request, response: Response, next: NextFunction) => {
+    if (!authService.isAuthenticated(request)) {
+      return response.status(401).json({
+        code: ErrorCode.UNAUTHORIZED,
+        message: '登录已过期，请重新登录',
+        data: null,
+      });
+    }
+    next();
+  });
 
   // 静态文件服务（宝宝头像上传目录）
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads/' });

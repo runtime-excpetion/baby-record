@@ -16,6 +16,7 @@ export default {
           // 系统主题色（明暗通用）
           blue: '#0a84ff',
           green: '#30d158',
+          red: '#ff453a',
           orange: '#ff9f0a',
           pink: '#ff375f',
           purple: '#bf5af2',

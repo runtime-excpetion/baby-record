@@ -1,18 +1,22 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBabyStore } from '@/stores/baby';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRecordStore } from '@/stores/record';
 import StatCard from '@/components/StatCard.vue';
 import QuickActionButton from '@/components/QuickActionButton.vue';
-import { fmtTime } from '@/utils/format';
+import { fmtTime, minutesToText } from '@/utils/format';
 import { getTempStatus } from '@baby-record/shared';
+import { NModal } from 'naive-ui';
 
 const router = useRouter();
 const babyStore = useBabyStore();
 const dashStore = useDashboardStore();
 const recordStore = useRecordStore();
+const nowMs = ref(Date.now());
+const showSleepAdvice = ref(false);
+let clockTimer: number | undefined;
 
 const baby = computed(() => babyStore.currentBaby);
 const loading = computed(() => babyStore.loading || (dashStore.loading && !dashStore.data));
@@ -36,10 +40,14 @@ onMounted(async () => {
     await babyStore.loadBabies();
   }
   await refresh();
+  clockTimer = window.setInterval(() => {
+    nowMs.value = Date.now();
+  }, 30_000);
   document.addEventListener('visibilitychange', onVisibility);
 });
 
 onUnmounted(() => {
+  if (clockTimer !== undefined) window.clearInterval(clockTimer);
   document.removeEventListener('visibilitychange', onVisibility);
 });
 
@@ -57,23 +65,77 @@ const temperatureClass = computed(() => {
   return { normal: 'text-ios-green', watch: 'text-ios-orange', fever: 'text-ios-pink', high: 'text-black font-bold' }[getTempStatus(latestTemperature.value.temperature)];
 });
 
-const sleepValue = computed(() => {
-  if (recordStore.ongoingSleep) return '睡眠中';
-  return dashStore.data?.sleep.text || '-';
+const sleepCard = computed(() => {
+  const prediction = dashStore.data?.wakePrediction;
+  if (recordStore.ongoingSleep || prediction?.isSleeping) {
+    const startTime = recordStore.ongoingSleep?.startTime;
+    return {
+      value: '睡眠中',
+      accent: 'text-ios-purple',
+      sub: startTime ? `从 ${fmtTime(startTime)} 开始睡眠` : '宝宝正在睡眠',
+      statusLabel: '',
+      statusClass: '',
+    };
+  }
+  if (
+    !prediction?.lastWakeTime ||
+    !prediction.sleepWindowStart ||
+    !prediction.recommendedSleepTime ||
+    !prediction.maxAwakeUntil
+  ) {
+    return {
+      value: '-',
+      accent: 'text-ios-secondary',
+      sub: '还没有完整的睡眠记录',
+      statusLabel: '',
+      statusClass: '',
+    };
+  }
+
+  const awakeMinutes = Math.max(0, Math.floor((nowMs.value - new Date(prediction.lastWakeTime).getTime()) / 60_000));
+  const windowStart = new Date(prediction.sleepWindowStart).getTime();
+  const windowEnd = new Date(prediction.maxAwakeUntil).getTime();
+  const beforeWindow = nowMs.value < windowStart;
+  const withinWindow = nowMs.value <= windowEnd;
+  const statusLabel = beforeWindow ? '（⚡ 精力充沛）' : withinWindow ? '（🌙 该哄睡了）' : '（😴 宝宝困了）';
+  const statusClass = beforeWindow
+    ? 'text-ios-green'
+    : withinWindow
+      ? 'text-ios-orange'
+      : 'text-ios-red';
+
+  return {
+    value: minutesToText(awakeMinutes),
+    accent: 'text-ios-purple',
+    sub: `最近结束 ${fmtTime(prediction.lastWakeTime)} · 建议 ${fmtTime(prediction.recommendedSleepTime)} 哄睡`,
+    statusLabel,
+    statusClass,
+  };
 });
 
-const sleepSub = computed(() => {
-  if (recordStore.ongoingSleep) {
-    return `从 ${fmtTime(recordStore.ongoingSleep.startTime)} 开始睡眠中`;
-  }
-  if (dashStore.data?.sleep.lastTime) {
-    return `最近 ${fmtTime(dashStore.data.sleep.lastTime)}`;
-  }
-  return '今天还没有睡眠记录';
+const sleepAdvice = computed(() => {
+  const prediction = dashStore.data?.wakePrediction;
+  if (
+    !prediction?.lastWakeTime ||
+    !prediction.sleepWindowStart ||
+    !prediction.recommendedSleepTime ||
+    !prediction.maxAwakeUntil
+  ) return null;
+
+  return {
+    ageMonths: prediction.ageMonths,
+    lastWakeTime: fmtTime(prediction.lastWakeTime),
+    windowStart: fmtTime(prediction.sleepWindowStart),
+    recommendedTime: fmtTime(prediction.recommendedSleepTime),
+    windowEnd: fmtTime(prediction.maxAwakeUntil),
+    wakeDuration: `${minutesToText(prediction.recommendedWakeMinutes)}–${minutesToText(prediction.maxWakeMinutes)}`,
+    sourceUrl: prediction.sourceUrl,
+  };
 });
 </script>
 
 <template>
+  <div>
   <div v-if="loading && !baby" class="px-5 pt-14 safe-top animate-fade-in">
     <div class="flex items-center gap-3 mb-5">
       <div class="w-14 h-14 rounded-full bg-ios-fill/60 animate-pulse" />
@@ -119,24 +181,62 @@ const sleepSub = computed(() => {
         title="距离上次喂养"
         :value="dashStore.data?.feeding.text || '-'"
         accent="text-ios-orange"
+        action-label="记录"
+        action-class="text-ios-orange"
         :sub="
           dashStore.data?.feeding.lastTime
             ? `最近 ${fmtTime(dashStore.data.feeding.lastTime)}`
             : '今天还没有喂养记录'
         "
+        @action="router.push('/record/feeding')"
       />
       <StatCard
         icon="🧷"
         title="距离上次换纸尿裤"
         :value="dashStore.data?.diaper.text || '-'"
         accent="text-ios-blue"
+        action-label="记录"
+        action-class="text-ios-blue"
         :sub="
           dashStore.data?.diaper.lastTime
             ? `最近 ${fmtTime(dashStore.data.diaper.lastTime)}`
             : '今天还没有更换记录'
         "
+        @action="router.push('/record/diaper')"
       />
-      <StatCard icon="😴" title="距离上次睡眠" :value="sleepValue" accent="text-ios-purple" :sub="sleepSub" />
+      <StatCard
+        icon="😴"
+        title="距上次睡觉"
+        :value="sleepCard.value"
+        :accent="sleepCard.accent"
+        :sub="sleepCard.sub"
+        action-label="记录"
+        action-class="text-ios-purple"
+        @action="router.push('/record/sleep')"
+      >
+        <template #value>
+          <span class="flex items-baseline gap-2 whitespace-nowrap">
+            <span>{{ sleepCard.value }}</span>
+            <span
+              v-if="sleepCard.statusLabel"
+              class="text-base font-bold shrink-0"
+              :class="sleepCard.statusClass"
+            >
+              {{ sleepCard.statusLabel }}
+            </span>
+          </span>
+        </template>
+        <template v-if="sleepAdvice" #sub>
+          <span>最近结束 {{ sleepAdvice.lastWakeTime }} · </span>
+          <button
+            type="button"
+            class="font-bold text-black dark:text-white underline decoration-dotted underline-offset-2 active:opacity-60"
+            @click="showSleepAdvice = true"
+          >
+            建议 {{ sleepAdvice.recommendedTime }} 哄睡
+          </button>
+        </template>
+      </StatCard>
       <div class="bg-ios-card rounded-3xl p-4 shadow-card">
         <div class="flex items-center gap-3">
           <span class="text-2xl">🌡️</span>
@@ -183,5 +283,61 @@ const sleepSub = computed(() => {
         <span class="text-ios-secondary text-xl">›</span>
       </button>
     </section>
+  </div>
+
+  <NModal
+    v-model:show="showSleepAdvice"
+    preset="card"
+    title="哄睡时间建议"
+    :bordered="false"
+    :style="{ width: 'calc(100vw - 40px)', maxWidth: '420px' }"
+  >
+    <div v-if="sleepAdvice" class="space-y-4 text-ios-label">
+      <div class="rounded-2xl bg-ios-fill/40 p-4 text-center">
+        <p class="text-xs text-ios-secondary">本次建议哄睡时间</p>
+        <p class="mt-1 text-3xl font-bold num-display text-black dark:text-white">
+          {{ sleepAdvice.recommendedTime }}
+        </p>
+        <p class="mt-1 text-sm text-ios-secondary">
+          建议范围 {{ sleepAdvice.windowStart }}–{{ sleepAdvice.windowEnd }}
+        </p>
+      </div>
+
+      <div class="divide-y divide-ios-separator/60 rounded-2xl bg-ios-card">
+        <div class="flex items-center justify-between gap-4 py-3">
+          <span class="text-sm text-ios-secondary">宝宝月龄</span>
+          <span class="text-sm font-medium">{{ sleepAdvice.ageMonths }} 个月</span>
+        </div>
+        <div class="flex items-center justify-between gap-4 py-3">
+          <span class="text-sm text-ios-secondary">最近睡眠结束</span>
+          <span class="text-sm font-medium num-display">{{ sleepAdvice.lastWakeTime }}</span>
+        </div>
+        <div class="flex items-center justify-between gap-4 py-3">
+          <span class="text-sm text-ios-secondary">参考清醒时长</span>
+          <span class="text-sm font-medium">{{ sleepAdvice.wakeDuration }}</span>
+        </div>
+        <div class="flex items-center justify-between gap-4 py-3">
+          <span class="text-sm text-ios-secondary">推荐计算方式</span>
+          <span class="text-sm font-medium">清醒区间中点</span>
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-ios-blue/10 p-4">
+        <p class="text-sm font-semibold text-ios-label">参考来源</p>
+        <a
+          :href="sleepAdvice.sourceUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-1 inline-block text-sm font-medium text-ios-blue underline underline-offset-2"
+        >
+          CHOC Children's Health：Babies and sleep ↗
+        </a>
+      </div>
+
+      <p class="text-xs leading-5 text-ios-secondary">
+        清醒窗口是按月龄估算的日常参考，不同宝宝和同一宝宝每天的睡眠需求都可能不同，请优先观察打哈欠、揉眼和活动减少等困倦信号。
+      </p>
+    </div>
+  </NModal>
   </div>
 </template>

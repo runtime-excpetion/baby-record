@@ -184,7 +184,20 @@ export interface DashboardData {
   feeding: StatusCard;
   diaper: StatusCard;
   sleep: StatusCard;
+  wakePrediction: WakePrediction;
   latestTemperature: Pick<TemperatureVo, 'temperature' | 'measureTime'> | null;
+}
+
+export interface WakePrediction {
+  isSleeping: boolean;
+  lastWakeTime: string | null;
+  sleepWindowStart: string | null;
+  recommendedSleepTime: string | null;
+  maxAwakeUntil: string | null;
+  recommendedWakeMinutes: number;
+  maxWakeMinutes: number;
+  ageMonths: number;
+  sourceUrl: string;
 }
 
 // ============ 时间间隔分析 ============

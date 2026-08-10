@@ -10,6 +10,7 @@ import type { ApiResponse } from '@baby-record/shared';
 const instance: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 15000,
+  withCredentials: true,
 });
 
 // 请求拦截
@@ -31,6 +32,15 @@ instance.interceptors.response.use(
   },
   (error) => {
     const msg = error?.response?.data?.message || error?.message || '网络异常，请稍后重试';
+    const isLoginRequest = String(error?.config?.url || '').includes('/auth/login');
+    if (error?.response?.status === 401 && !isLoginRequest) {
+      const current = `${window.location.pathname}${window.location.search}`;
+      if (window.location.pathname !== '/login') {
+        window.location.assign(`/login?redirect=${encodeURIComponent(current)}`);
+      }
+      return Promise.reject(error);
+    }
+    if (isLoginRequest) return Promise.reject(error);
     $message.error(msg);
     return Promise.reject(error);
   },
