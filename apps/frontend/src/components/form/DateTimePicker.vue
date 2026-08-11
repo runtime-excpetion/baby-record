@@ -87,29 +87,33 @@ function useShortcut(offset: number) {
 
 <template>
   <div class="space-y-2">
-    <div class="grid grid-cols-[minmax(0,1.25fr)_minmax(0,0.85fr)] gap-2">
+    <div class="grid grid-cols-[minmax(0,1.25fr)_minmax(0,0.85fr)] gap-3">
       <label class="min-w-0">
         <span class="mb-1 block text-xs text-gray-500">日期</span>
-        <input
-          class="date-time-input"
-          type="date"
-          :value="dateValue"
-          :max="today"
-          aria-label="日期"
-          @change="updateDate"
-        />
+        <span class="date-time-field">
+          <input
+            class="date-time-input"
+            type="date"
+            :value="dateValue"
+            :max="today"
+            aria-label="日期"
+            @change="updateDate"
+          />
+        </span>
       </label>
       <label class="min-w-0">
         <span class="mb-1 block text-xs text-gray-500">时间</span>
-        <input
-          class="date-time-input"
-          type="time"
-          :value="timeValue"
-          :max="latestTime"
-          step="60"
-          aria-label="时间"
-          @change="updateTime"
-        />
+        <span class="date-time-field">
+          <input
+            class="date-time-input"
+            type="time"
+            :value="timeValue"
+            :max="latestTime"
+            step="60"
+            aria-label="时间"
+            @change="updateTime"
+          />
+        </span>
       </label>
     </div>
 
@@ -137,7 +141,9 @@ function useShortcut(offset: number) {
 </template>
 
 <style scoped>
-.date-time-input {
+.date-time-field {
+  display: flex;
+  align-items: center;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -147,14 +153,27 @@ function useShortcut(offset: number) {
   border-radius: 12px;
   background: #fff;
   color: #1f2937;
-  font-size: 16px;
-  font-variant-numeric: tabular-nums;
-  outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.date-time-input:focus {
+.date-time-field:focus-within {
   border-color: #22c55e;
   box-shadow: 0 0 0 3px rgb(34 197 94 / 12%);
+}
+
+.date-time-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
 }
 </style>
