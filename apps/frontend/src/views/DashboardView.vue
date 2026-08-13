@@ -16,6 +16,7 @@ const dashStore = useDashboardStore();
 const recordStore = useRecordStore();
 const nowMs = ref(Date.now());
 const showSleepAdvice = ref(false);
+const showFeedingAdvice = ref(false);
 let clockTimer: number | undefined;
 
 const baby = computed(() => babyStore.currentBaby);
@@ -132,6 +133,26 @@ const sleepAdvice = computed(() => {
     sourceUrl: prediction.sourceUrl,
   };
 });
+
+const feedingAdvice = computed(() => {
+  const s = dashStore.data?.feedingSuggestion;
+  if (!s) return null;
+  const isBreast = s.lastFeedingType === 'BREAST_MILK';
+  const perFeedText =
+    s.perFeedMinMl != null && s.perFeedMaxMl != null ? `${s.perFeedMinMl}–${s.perFeedMaxMl}ml` : null;
+  return {
+    lastFeedTime: fmtTime(s.lastFeedTime),
+    recommendedTime: fmtTime(s.recommendedNextFeedTime),
+    intervalText: s.intervalRangeText,
+    ageMonths: s.ageMonths,
+    isBreast,
+    perFeedText,
+    dailyAmountText: s.dailyAmountMl != null ? `${s.dailyAmountMl}ml` : null,
+    feedingCount: s.feedingCount,
+    lastAmountText: s.lastAmountMl != null ? `${s.lastAmountMl}ml` : null,
+    sourceUrl: s.sourceUrl,
+  };
+});
 </script>
 
 <template>
@@ -189,7 +210,19 @@ const sleepAdvice = computed(() => {
             : '今天还没有喂养记录'
         "
         @action="router.push('/record/feeding')"
-      />
+      >
+        <template v-if="feedingAdvice" #sub>
+          <span>最近 {{ feedingAdvice.lastFeedTime }} · </span>
+          <button
+            type="button"
+            class="font-bold text-black dark:text-white underline decoration-dotted underline-offset-2 active:opacity-60"
+            @click="showFeedingAdvice = true"
+          >
+            建议 {{ feedingAdvice.recommendedTime }} 喂养
+          </button>
+          <span v-if="feedingAdvice.perFeedText"> · 约{{ feedingAdvice.perFeedText }}</span>
+        </template>
+      </StatCard>
       <StatCard
         icon="🧷"
         title="距离上次换纸尿裤"
@@ -351,6 +384,80 @@ const sleepAdvice = computed(() => {
 
       <p class="text-xs leading-5 text-ios-secondary">
         清醒窗口是按月龄估算的日常参考，不同宝宝和同一宝宝每天的睡眠需求都可能不同，请优先观察打哈欠、揉眼和活动减少等困倦信号。
+      </p>
+    </div>
+  </NModal>
+
+  <NModal
+    v-model:show="showFeedingAdvice"
+    preset="card"
+    title="喂养建议"
+    :bordered="false"
+    :style="{ width: 'calc(100vw - 40px)', maxWidth: '420px' }"
+  >
+    <div v-if="feedingAdvice" class="space-y-4 text-ios-label">
+      <div class="rounded-2xl bg-ios-fill/40 p-4 text-center">
+        <p class="text-xs text-ios-secondary">本次建议喂养时间</p>
+        <p class="mt-1 text-3xl font-bold num-display text-black dark:text-white">
+          {{ feedingAdvice.recommendedTime }}
+        </p>
+        <p class="mt-1 text-sm text-ios-secondary">
+          参考间隔 {{ feedingAdvice.intervalText }}
+        </p>
+      </div>
+
+      <div v-if="feedingAdvice.isBreast" class="rounded-2xl bg-ios-orange/10 p-4 text-sm text-ios-orange">
+        <p class="font-semibold">母乳提倡按需喂养</p>
+        <p class="text-xs mt-1">通常每天 8~12 次，观察宝宝的饥饿信号即可，无需严格卡时间。</p>
+      </div>
+
+      <div class="divide-y divide-ios-separator/60 rounded-2xl bg-ios-card">
+        <div class="flex items-center justify-between gap-4 py-3">
+          <span class="text-sm text-ios-secondary">宝宝月龄</span>
+          <span class="text-sm font-medium">{{ feedingAdvice.ageMonths }} 个月</span>
+        </div>
+        <div class="flex items-center justify-between gap-4 py-3">
+          <span class="text-sm text-ios-secondary">最近喂养</span>
+          <span class="text-sm font-medium num-display">{{ feedingAdvice.lastFeedTime }}</span>
+        </div>
+        <div class="flex items-center justify-between gap-4 py-3">
+          <span class="text-sm text-ios-secondary">参考间隔</span>
+          <span class="text-sm font-medium">{{ feedingAdvice.intervalText }}</span>
+        </div>
+        <template v-if="!feedingAdvice.isBreast">
+          <div class="flex items-center justify-between gap-4 py-3">
+            <span class="text-sm text-ios-secondary">建议奶量</span>
+            <span class="text-sm font-medium">{{ feedingAdvice.perFeedText }}</span>
+          </div>
+          <div class="flex items-center justify-between gap-4 py-3">
+            <span class="text-sm text-ios-secondary">每日喂养次数</span>
+            <span class="text-sm font-medium">约 {{ feedingAdvice.feedingCount }} 次</span>
+          </div>
+          <div class="flex items-center justify-between gap-4 py-3">
+            <span class="text-sm text-ios-secondary">每日参考总量</span>
+            <span class="text-sm font-medium">{{ feedingAdvice.dailyAmountText }}</span>
+          </div>
+          <div v-if="feedingAdvice.lastAmountText" class="flex items-center justify-between gap-4 py-3">
+            <span class="text-sm text-ios-secondary">上次奶量</span>
+            <span class="text-sm font-medium">{{ feedingAdvice.lastAmountText }}</span>
+          </div>
+        </template>
+      </div>
+
+      <div class="rounded-2xl bg-ios-blue/10 p-4">
+        <p class="text-sm font-semibold text-ios-label">参考来源</p>
+        <a
+          :href="feedingAdvice.sourceUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-1 inline-block text-sm font-medium text-ios-blue underline underline-offset-2"
+        >
+          AAP Healthychildren：How Often and How Much Should Your Baby Eat? ↗
+        </a>
+      </div>
+
+      <p class="text-xs leading-5 text-ios-secondary">
+        喂养间隔和奶量按月龄估算，仅供参考。不同宝宝和同一宝宝每天的奶量都可能不同，母乳提倡按需喂养，请优先观察宝宝的饥饿信号，必要时咨询儿科医生。
       </p>
     </div>
   </NModal>

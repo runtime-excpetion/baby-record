@@ -185,6 +185,7 @@ export interface DashboardData {
   diaper: StatusCard;
   sleep: StatusCard;
   wakePrediction: WakePrediction;
+  feedingSuggestion: FeedingSuggestion | null;
   latestTemperature: Pick<TemperatureVo, 'temperature' | 'measureTime'> | null;
 }
 
@@ -196,6 +197,22 @@ export interface WakePrediction {
   maxAwakeUntil: string | null;
   recommendedWakeMinutes: number;
   maxWakeMinutes: number;
+  ageMonths: number;
+  sourceUrl: string;
+}
+
+/** 首页喂养建议：基于最近一次喂养时间与宝宝月龄推算 */
+export interface FeedingSuggestion {
+  lastFeedTime: string;
+  recommendedNextFeedTime: string;
+  recommendedIntervalMinutes: number;
+  intervalRangeText: string;
+  perFeedMinMl: number | null;
+  perFeedMaxMl: number | null;
+  dailyAmountMl: number | null;
+  feedingCount: number;
+  lastFeedingType: FeedingType;
+  lastAmountMl: number | null;
   ageMonths: number;
   sourceUrl: string;
 }

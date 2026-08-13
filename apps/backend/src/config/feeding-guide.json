@@ -1,0 +1,79 @@
+[
+  {
+    "minMonth": 0,
+    "maxMonth": 1,
+    "recommendedIntervalMinutes": 150,
+    "minIntervalMinutes": 120,
+    "maxIntervalMinutes": 180,
+    "perFeedMinMl": 60,
+    "perFeedMaxMl": 120,
+    "dailyAmountMl": 600,
+    "feedingCount": 8
+  },
+  {
+    "minMonth": 2,
+    "maxMonth": 3,
+    "recommendedIntervalMinutes": 210,
+    "minIntervalMinutes": 180,
+    "maxIntervalMinutes": 240,
+    "perFeedMinMl": 90,
+    "perFeedMaxMl": 150,
+    "dailyAmountMl": 800,
+    "feedingCount": 7
+  },
+  {
+    "minMonth": 4,
+    "maxMonth": 5,
+    "recommendedIntervalMinutes": 210,
+    "minIntervalMinutes": 180,
+    "maxIntervalMinutes": 240,
+    "perFeedMinMl": 120,
+    "perFeedMaxMl": 180,
+    "dailyAmountMl": 900,
+    "feedingCount": 6
+  },
+  {
+    "minMonth": 6,
+    "maxMonth": 8,
+    "recommendedIntervalMinutes": 210,
+    "minIntervalMinutes": 180,
+    "maxIntervalMinutes": 240,
+    "perFeedMinMl": 180,
+    "perFeedMaxMl": 240,
+    "dailyAmountMl": 700,
+    "feedingCount": 5
+  },
+  {
+    "minMonth": 9,
+    "maxMonth": 11,
+    "recommendedIntervalMinutes": 210,
+    "minIntervalMinutes": 180,
+    "maxIntervalMinutes": 240,
+    "perFeedMinMl": 180,
+    "perFeedMaxMl": 240,
+    "dailyAmountMl": 600,
+    "feedingCount": 4
+  },
+  {
+    "minMonth": 12,
+    "maxMonth": 23,
+    "recommendedIntervalMinutes": 300,
+    "minIntervalMinutes": 240,
+    "maxIntervalMinutes": 360,
+    "perFeedMinMl": null,
+    "perFeedMaxMl": null,
+    "dailyAmountMl": 500,
+    "feedingCount": 3
+  },
+  {
+    "minMonth": 24,
+    "maxMonth": 60,
+    "recommendedIntervalMinutes": 360,
+    "minIntervalMinutes": 300,
+    "maxIntervalMinutes": 480,
+    "perFeedMinMl": null,
+    "perFeedMaxMl": null,
+    "dailyAmountMl": 400,
+    "feedingCount": 2
+  }
+]

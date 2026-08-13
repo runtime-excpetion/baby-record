@@ -4,7 +4,9 @@ import { TimeUtil } from '../../common/utils/time.util';
 import { AgeUtil } from '../../common/utils/age.util';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { ErrorCode } from '../../common/enums/error-code.enum';
+import { FeedingType } from '@prisma/client';
 import { WakeWindowService } from './wake-window.service';
+import { FeedingGuideService, FeedingGuideConfig } from './feeding-guide.service';
 
 export interface StatusCard {
   lastTime: string | null;
@@ -13,6 +15,8 @@ export interface StatusCard {
 }
 
 export const WAKE_WINDOW_SOURCE = 'https://health.choc.org/babies-and-sleep-the-ultimate-guide/';
+export const FEEDING_GUIDE_SOURCE =
+  'https://www.healthychildren.org/English/ages-stages/baby/feeding-nutrition/Pages/how-often-and-how-much-should-your-baby-eat.aspx';
 
 /**
  * 首页仪表盘：三张状态卡片（距离上次 喂养/换纸尿裤/睡眠）
@@ -22,13 +26,18 @@ export class DashboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly wakeWindows: WakeWindowService,
+    private readonly feedingGuides: FeedingGuideService,
   ) {}
 
   async overview(babyId: number) {
     const now = new Date();
     const [baby, lastFeeding, lastDiaper, lastSleep, latestTemperature] = await Promise.all([
       this.prisma.baby.findUnique({ where: { id: babyId }, select: { birthday: true } }),
-      this.prisma.feeding.findFirst({ where: { babyId, feedingTime: { lte: now } }, orderBy: { feedingTime: 'desc' } }),
+      this.prisma.feeding.findFirst({
+        where: { babyId, feedingTime: { lte: now } },
+        orderBy: { feedingTime: 'desc' },
+        select: { feedingTime: true, feedingType: true, amountMl: true },
+      }),
       this.prisma.diaper.findFirst({ where: { babyId, changeTime: { lte: now } }, orderBy: { changeTime: 'desc' } }),
       this.prisma.sleep.findFirst({ where: { babyId, startTime: { lte: now } }, orderBy: { startTime: 'desc' } }),
       this.prisma.temperature.findFirst({ where: { babyId, measureTime: { lte: now } }, orderBy: { measureTime: 'desc' } }),
@@ -37,6 +46,7 @@ export class DashboardService {
     if (!baby) throw new BusinessException(ErrorCode.BABY_NOT_FOUND);
     const ageMonths = AgeUtil.calc(baby.birthday, now).totalMonths;
     const window = this.wakeWindows.findByAgeMonths(ageMonths);
+    const feedingGuide = this.feedingGuides.findByAgeMonths(ageMonths);
 
     return {
       feeding: this.card(lastFeeding?.feedingTime),
@@ -44,9 +54,35 @@ export class DashboardService {
       // 睡眠间隔起点：已结束取 endTime，进行中（endTime 为 null）回退取 startTime
       sleep: this.card(lastSleep ? (lastSleep.endTime ?? lastSleep.startTime) : null),
       wakePrediction: this.wakePrediction(lastSleep, ageMonths, window),
+      feedingSuggestion: this.feedingSuggestion(lastFeeding, ageMonths, feedingGuide),
       latestTemperature: latestTemperature
         ? { temperature: Number(latestTemperature.temperature), measureTime: latestTemperature.measureTime.toISOString() }
         : null,
+    };
+  }
+
+  private feedingSuggestion(
+    lastFeeding: { feedingTime: Date; feedingType: FeedingType; amountMl: number | null } | null,
+    ageMonths: number,
+    guide: FeedingGuideConfig,
+  ) {
+    if (!lastFeeding) return null;
+    const recommendedNextFeedTime = new Date(
+      lastFeeding.feedingTime.getTime() + guide.recommendedIntervalMinutes * 60_000,
+    );
+    return {
+      lastFeedTime: lastFeeding.feedingTime.toISOString(),
+      recommendedNextFeedTime: recommendedNextFeedTime.toISOString(),
+      recommendedIntervalMinutes: guide.recommendedIntervalMinutes,
+      intervalRangeText: `${TimeUtil.minutesToText(guide.minIntervalMinutes)}–${TimeUtil.minutesToText(guide.maxIntervalMinutes)}`,
+      perFeedMinMl: guide.perFeedMinMl,
+      perFeedMaxMl: guide.perFeedMaxMl,
+      dailyAmountMl: guide.dailyAmountMl,
+      feedingCount: guide.feedingCount,
+      lastFeedingType: lastFeeding.feedingType,
+      lastAmountMl: lastFeeding.amountMl,
+      ageMonths,
+      sourceUrl: FEEDING_GUIDE_SOURCE,
     };
   }
 
