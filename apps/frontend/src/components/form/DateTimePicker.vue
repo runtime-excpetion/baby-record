@@ -147,7 +147,8 @@ function useShortcut(offset: number) {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 44px;
+  --dt-height: 44px;
+  height: var(--dt-height);
   padding: 0 10px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -173,7 +174,14 @@ function useShortcut(offset: number) {
   background: transparent;
   color: inherit;
   font-size: 16px;
+  line-height: var(--dt-height);
   font-variant-numeric: tabular-nums;
   outline: none;
+}
+
+/* iOS 上原生日期/时间输入框的值区域：左对齐并纵向撑满容器，配合 line-height 使文字垂直居中 */
+.date-time-input::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: var(--dt-height);
 }
 </style>
