@@ -19,7 +19,7 @@ const babyStore = useBabyStore();
 const userStore = useUserStore();
 const dashStore = useDashboardStore();
 
-const feedingType = ref<FeedingType>('FORMULA');
+const feedingType = ref<FeedingType>('BREAST_MILK');
 const time = ref(Date.now());
 const amountMl = ref(120);
 const remark = ref('');

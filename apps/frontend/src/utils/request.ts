@@ -52,17 +52,52 @@ export const http = {
     return instance.get(url, { params }) as unknown as Promise<T>;
   },
   post<T>(url: string, data?: object): Promise<T> {
-    return instance.post(url, data) as unknown as Promise<T>;
+    return dedupe('post', url, data, () => instance.post(url, data));
   },
   patch<T>(url: string, data?: object): Promise<T> {
-    return instance.patch(url, data) as unknown as Promise<T>;
+    return dedupe('patch', url, data, () => instance.patch(url, data));
   },
   put<T>(url: string, data?: object): Promise<T> {
-    return instance.put(url, data) as unknown as Promise<T>;
+    return dedupe('put', url, data, () => instance.put(url, data));
   },
   delete<T>(url: string): Promise<T> {
     return instance.delete(url) as unknown as Promise<T>;
   },
 };
+
+// ---- 写操作请求级去重（防重复提交）----
+// 对进行中的相同写请求（method + url + body 一致）复用同一个 Promise，
+// 从根源避免因网络延迟、连点或刷新前已飞出而导致的重复提交。
+const inflight = new Map<string, Promise<unknown>>();
+// 兜底超时：与实例 timeout 对齐，防止极端情况下 key 异常驻留
+const DEDUPE_TIMEOUT = 15000;
+
+function dedupeKey(method: string, url: string, data?: object): string {
+  return `${method} ${url} ${data == null ? '' : JSON.stringify(data)}`;
+}
+
+function dedupe<T>(
+  method: string,
+  url: string,
+  data: object | undefined,
+  run: () => Promise<AxiosResponse>,
+): Promise<T> {
+  const key = dedupeKey(method, url, data);
+  const existing = inflight.get(key);
+  if (existing) return existing as Promise<T>;
+
+  const promise = run() as unknown as Promise<T>;
+  inflight.set(key, promise);
+
+  // 兜底清理：即便 Promise 因故未 settle，超时后也允许后续重新提交
+  const timer = setTimeout(() => inflight.delete(key), DEDUPE_TIMEOUT);
+  const cleanup = () => {
+    clearTimeout(timer);
+    inflight.delete(key);
+  };
+  promise.then(cleanup, cleanup);
+
+  return promise;
+}
 
 export type { AxiosRequestConfig };

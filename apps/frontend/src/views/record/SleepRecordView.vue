@@ -125,6 +125,8 @@ function confirmQuickSleep(option: (typeof quickSleepOptions)[number]) {
     positiveText: '确认新增',
     negativeText: '取消',
     onPositiveClick: async () => {
+      // 防止网络延迟下重复点击「确认新增」导致重复提交
+      if (quickSubmitting.value) return false;
       quickSubmitting.value = true;
       try {
         await sleepApi.create({
