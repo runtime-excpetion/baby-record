@@ -32,6 +32,38 @@
   color-scheme: light;
 }
 
+/* ===== 老年人模式 =====
+ * 通过根字号缩放所有 rem 单位的页面文字与间距，并为常用操作补足触控面积。
+ */
+html.senior-mode {
+  font-size: 20px;
+}
+
+html.senior-mode body {
+  font-weight: 500;
+  -webkit-font-smoothing: auto;
+}
+
+html.senior-mode .text-xs {
+  font-size: 0.85rem;
+  line-height: 1.45rem;
+}
+
+html.senior-mode .text-\[10px\] {
+  font-size: 0.8rem;
+}
+
+html.senior-mode button,
+html.senior-mode [role='button'] {
+  min-height: 56px;
+}
+
+html.senior-mode input,
+html.senior-mode select,
+html.senior-mode textarea {
+  font-size: 1rem;
+}
+
 /* ===== 暗色 ===== */
 .dark {
   --ios-bg: #000000;

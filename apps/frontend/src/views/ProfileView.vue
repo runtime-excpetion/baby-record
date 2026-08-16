@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useMessage } from 'naive-ui';
+import { NIcon, NSwitch, useMessage } from 'naive-ui';
+import { EyeOutline } from '@vicons/ionicons5';
 import { babyApi } from '@/api/baby';
 import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
@@ -28,6 +29,10 @@ const themeOptions: { label: string; value: ThemeMode }[] = [
 const themeMode = computed({
   get: () => themeStore.mode,
   set: (v: ThemeMode) => themeStore.setMode(v),
+});
+const seniorMode = computed({
+  get: () => themeStore.seniorMode,
+  set: (enabled: boolean) => themeStore.setSeniorMode(enabled),
 });
 
 const baby = computed(() => babyStore.currentBaby);
@@ -141,6 +146,16 @@ async function logout() {
       <h2 class="text-sm font-semibold text-ios-secondary mb-2 px-1">外观</h2>
       <div class="bg-ios-card rounded-3xl p-4 shadow-card">
         <TypeSegment v-model="themeMode" :options="themeOptions" />
+      </div>
+      <div class="bg-ios-card rounded-3xl p-4 shadow-card flex items-center gap-3 mt-3">
+        <div class="w-11 h-11 rounded-2xl bg-ios-orange/15 text-ios-orange flex items-center justify-center">
+          <NIcon :component="EyeOutline" :size="24" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-ios-label">老年人模式</p>
+          <p class="text-xs text-ios-secondary mt-0.5">放大文字和按钮，提高阅读清晰度</p>
+        </div>
+        <NSwitch v-model:value="seniorMode" aria-label="老年人模式" />
       </div>
     </section>
 
