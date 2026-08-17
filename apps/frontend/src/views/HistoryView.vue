@@ -11,6 +11,7 @@ import { supplementApi } from '@/api/supplement';
 import { activityApi } from '@/api/activity';
 import { temperatureApi } from '@/api/temperature';
 import { useBabyStore } from '@/stores/baby';
+import { useThemeStore } from '@/stores/theme';
 import { fmtTime, fmtDate, minutesToText } from '@/utils/format';
 import { isFutureDate } from '@/utils/date-picker';
 import {
@@ -31,6 +32,7 @@ withDefaults(defineProps<{
 });
 
 const babyStore = useBabyStore();
+const themeStore = useThemeStore();
 const dialog = useDialog();
 const message = useMessage();
 
@@ -154,7 +156,23 @@ async function removeEntry(e: TimelineEntry) {
   });
 }
 
+function removeEditingEntry() {
+  if (!editingEntry.value) return;
+  const entry = editingEntry.value;
+  editingEntry.value = null;
+  removeEntry(entry);
+}
+
 const filteredItems = computed(() => selectedType.value === 'all' ? items.value : items.value.filter((item) => item.type === selectedType.value));
+function isEarliestRecordOfDay(item: TimelineEntry, index: number): boolean {
+  return index === filteredItems.value.length - 1 || fmtDate(item.time) !== fmtDate(filteredItems.value[index + 1].time);
+}
+
+function fmtTimelineDate(time: string): string {
+  const date = new Date(time);
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
 function creatorName(item: TimelineEntry): string {
   return item.raw.creator?.name || '未知用户';
 }
@@ -196,6 +214,12 @@ watch(dateRange, load, { deep: true });
       <TransitionGroup v-else name="list" tag="div" class="relative pb-4">
         <div v-for="(it, i) in filteredItems" :key="it.type + '-' + it.raw.id" class="flex gap-3">
           <div class="flex flex-col items-center w-12 shrink-0 pt-1">
+            <span
+              v-if="isEarliestRecordOfDay(it, i)"
+              class="mb-1 rounded-lg bg-ios-card px-1.5 py-1 text-[10px] font-bold text-ios-label num-display shadow-card whitespace-nowrap"
+            >
+              {{ fmtTimelineDate(it.time) }}
+            </span>
             <span class="text-xs text-ios-secondary num-display">{{ fmtTime(it.time) }}</span>
             <span class="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" :class="it.colorClass"></span>
             <span v-if="i < filteredItems.length - 1" class="flex-1 w-px bg-ios-separator mt-1 mb-1"></span>
@@ -219,7 +243,7 @@ watch(dateRange, load, { deep: true });
       </TransitionGroup>
     </div>
 
-    <EditRecordModal :entry="editingEntry" @close="editingEntry = null" @saved="editingEntry = null; load()" />
+    <EditRecordModal :entry="editingEntry" @close="editingEntry = null" @saved="editingEntry = null; load()" @remove="removeEditingEntry" />
     <Teleport to="body">
       <div v-if="detailEntry" class="fixed inset-0 z-50 flex items-end justify-center">
         <div class="absolute inset-0 bg-black/40" @click="detailEntry = null" />
@@ -232,7 +256,7 @@ watch(dateRange, load, { deep: true });
             <div class="flex justify-between gap-4"><span class="text-ios-secondary">创建时间</span><span class="text-ios-label">{{ new Date(detailEntry.raw.createdTime).toLocaleString('zh-CN', { hour12: false }) }}</span></div>
             <div class="flex justify-between gap-4"><span class="text-ios-secondary">更新时间</span><span class="text-ios-label">{{ detailEntry.raw.updatedTime ? new Date(detailEntry.raw.updatedTime).toLocaleString('zh-CN', { hour12: false }) : '未修改' }}</span></div>
           </div>
-          <button class="w-full py-3.5 mt-4 rounded-2xl bg-ios-blue text-white font-semibold" @click="editingEntry = detailEntry; detailEntry = null">修改记录</button>
+          <button class="w-full mt-4 rounded-2xl bg-ios-blue text-white font-semibold" :class="themeStore.seniorMode ? 'min-h-16 text-xl' : 'py-3.5'" @click="editingEntry = detailEntry; detailEntry = null">修改记录</button>
         </section>
       </div>
     </Teleport>

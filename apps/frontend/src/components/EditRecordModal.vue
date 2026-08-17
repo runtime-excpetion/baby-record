@@ -20,10 +20,13 @@ import {
   type DiaperType,
 } from '@baby-record/shared';
 import type { TimelineEntry } from '@/types/timeline';
+import { useThemeStore } from '@/stores/theme';
+import { fmtDateTime } from '@/utils/format';
 
 const props = defineProps<{ entry: TimelineEntry | null }>();
-const emit = defineEmits<{ close: []; saved: [] }>();
+const emit = defineEmits<{ close: []; saved: []; remove: [] }>();
 const message = useMessage();
+const themeStore = useThemeStore();
 
 const time = ref(0);
 const sleepStart = ref(0);
@@ -39,6 +42,7 @@ const eventType = ref('');
 const description = ref('');
 const temperature = ref(36.5);
 const submitting = ref(false);
+const seniorStep = ref<'summary' | 'time' | 'details' | 'confirm'>('summary');
 
 const feedingTypeOptions = ALL_FEEDING_TYPES.map((v) => ({
   label: FEEDING_TYPE_LABELS[v],
@@ -60,6 +64,23 @@ const titleMap: Record<TimelineEntry['type'], string> = {
   temperature: '体温',
 };
 const entryTitle = computed(() => (props.entry ? titleMap[props.entry.type] : ''));
+const seniorTimeText = computed(() => {
+  if (!props.entry) return '';
+  if (props.entry.type === 'sleep') {
+    const end = sleepEnd.value ? ` 至 ${fmtDateTime(sleepEnd.value)}` : '（睡眠中）';
+    return `${fmtDateTime(sleepStart.value)}${end}`;
+  }
+  return fmtDateTime(time.value);
+});
+const seniorDetailText = computed(() => {
+  if (!props.entry) return '';
+  if (props.entry.type === 'feeding') return `${FEEDING_TYPE_LABELS[feedingType.value]} · ${amountMl.value} ml`;
+  if (props.entry.type === 'diaper') return DIAPER_TYPE_LABELS[diaperType.value];
+  if (props.entry.type === 'temperature') return `${temperature.value.toFixed(1)}℃`;
+  if (props.entry.type === 'supplement') return `${supplementName.value || '未填写名称'}${amount.value ? ` · ${amount.value}${unit.value}` : ''}`;
+  if (props.entry.type === 'activity') return eventType.value || '未填写事件类型';
+  return '查看并修改睡眠时间';
+});
 
 function iso(ts: number) {
   return new Date(ts).toISOString();
@@ -69,6 +90,7 @@ watch(
   () => props.entry,
   (e) => {
     if (!e) return;
+    seniorStep.value = 'summary';
     remark.value = '';
     const r = e.raw as unknown as Record<string, unknown>;
     if (e.type === 'feeding') {
@@ -103,6 +125,21 @@ watch(
   },
   { immediate: true },
 );
+
+function setSeniorTime(minutesAgo: number) {
+  const value = Date.now() - minutesAgo * 60_000;
+  if (props.entry?.type === 'sleep') {
+    const duration = sleepEnd.value ? sleepEnd.value - sleepStart.value : 0;
+    sleepEnd.value = value;
+    sleepStart.value = duration > 0 ? value - duration : value;
+  } else {
+    time.value = value;
+  }
+}
+
+function requestRemove() {
+  emit('remove');
+}
 
 async function onSave() {
   if (!props.entry) return;
@@ -162,6 +199,62 @@ async function onSave() {
     <div v-if="entry" class="fixed inset-0 z-50 flex items-end justify-center">
       <div class="absolute inset-0 bg-black/40" @click="emit('close')" />
       <div
+        v-if="themeStore.seniorMode"
+        class="relative w-full max-w-app bg-ios-bg rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto no-scrollbar animate-slide-up safe-bottom"
+      >
+        <template v-if="seniorStep === 'summary'">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="text-xl font-bold text-ios-label">修改{{ entryTitle }}记录</h3>
+            <button class="text-ios-label text-base font-semibold px-3" @click="emit('close')">关闭</button>
+          </div>
+          <div class="bg-ios-card rounded-3xl p-5 shadow-card space-y-4">
+            <div><p class="text-sm font-medium text-ios-secondary">当前记录</p><p class="text-2xl font-bold text-ios-label mt-1">{{ entryTitle }}</p></div>
+            <div class="border-t border-ios-separator pt-4"><p class="text-sm text-ios-secondary">记录时间</p><p class="text-lg font-semibold text-ios-label mt-1">{{ seniorTimeText }}</p></div>
+            <div><p class="text-sm text-ios-secondary">记录内容</p><p class="text-xl font-bold text-ios-label mt-1">{{ seniorDetailText }}</p></div>
+          </div>
+          <div class="space-y-3 mt-4">
+            <button class="w-full min-h-16 rounded-2xl bg-ios-card text-ios-label text-lg font-semibold shadow-card" @click="seniorStep = 'time'">修改时间</button>
+            <button class="w-full min-h-16 rounded-2xl bg-ios-blue text-white text-lg font-semibold shadow-card" @click="seniorStep = 'details'">修改{{ entryTitle === '喂养' ? '类型或奶量' : '记录内容' }}</button>
+            <button class="w-full min-h-16 rounded-2xl bg-ios-card text-ios-pink text-lg font-semibold shadow-card" @click="requestRemove">删除这条{{ entryTitle }}记录</button>
+          </div>
+        </template>
+
+        <template v-else-if="seniorStep === 'time'">
+          <div class="flex items-center justify-between mb-5"><button class="text-ios-blue text-lg font-semibold" @click="seniorStep = 'summary'">返回</button><h3 class="text-xl font-bold text-ios-label">修改时间</h3><span class="w-10" /></div>
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <button v-for="option in [{ label: '刚刚', minutes: 0 }, { label: '5 分钟前', minutes: 5 }, { label: '30 分钟前', minutes: 30 }, { label: '1 小时前', minutes: 60 }]" :key="option.minutes" class="min-h-16 rounded-2xl bg-ios-card text-ios-label text-lg font-semibold shadow-card" @click="setSeniorTime(option.minutes)">{{ option.label }}</button>
+          </div>
+          <div class="bg-ios-card rounded-3xl p-5 shadow-card">
+            <p class="text-base font-semibold text-ios-label mb-3">选择其他时间</p>
+            <template v-if="entry.type === 'sleep'"><p class="text-sm text-ios-secondary mb-2">开始时间</p><DateTimePicker v-model="sleepStart" class="w-full" /><p class="text-sm text-ios-secondary mb-2 mt-5">结束时间</p><DateTimePicker v-model="sleepEnd" clearable class="w-full" /></template>
+            <DateTimePicker v-else v-model="time" class="w-full" />
+          </div>
+          <button class="w-full mt-4 min-h-16 rounded-2xl bg-ios-blue text-white text-lg font-semibold" @click="seniorStep = 'confirm'">下一步</button>
+        </template>
+
+        <template v-else-if="seniorStep === 'details'">
+          <div class="flex items-center justify-between mb-5"><button class="text-ios-blue text-lg font-semibold" @click="seniorStep = 'summary'">返回</button><h3 class="text-xl font-bold text-ios-label">修改内容</h3><span class="w-10" /></div>
+          <div class="space-y-4">
+            <div v-if="entry.type === 'feeding'" class="bg-ios-card rounded-3xl p-5 shadow-card"><p class="text-base font-semibold text-ios-label mb-3">喂养类型</p><IconPicker v-model="feedingType" :options="feedingTypeOptions" active-color="bg-ios-orange" /><p class="text-base font-semibold text-ios-label mt-6 mb-3">奶量</p><WheelPicker v-model="amountMl" :options="Array.from({ length: 31 }, (_, i) => ({ label: `${i * 10} ml`, value: i * 10 }))" /></div>
+            <div v-else-if="entry.type === 'diaper'" class="bg-ios-card rounded-3xl p-5 shadow-card"><p class="text-base font-semibold text-ios-label mb-3">纸尿裤类型</p><IconPicker v-model="diaperType" :options="diaperTypeOptions" active-color="bg-ios-blue" /></div>
+            <div v-else-if="entry.type === 'temperature'" class="bg-ios-card rounded-3xl p-5 shadow-card"><p class="text-base font-semibold text-ios-label mb-3">体温</p><WheelPicker v-model="temperature" :options="Array.from({ length: 51 }, (_, i) => ({ label: `${(36 + i / 10).toFixed(1)}℃`, value: 36 + i / 10 }))" /></div>
+            <div v-else-if="entry.type === 'supplement'" class="bg-ios-card rounded-3xl p-5 shadow-card space-y-4"><div><p class="text-base font-semibold text-ios-label mb-2">名称</p><NInput v-model:value="supplementName" size="large" /></div><div><p class="text-base font-semibold text-ios-label mb-2">剂量</p><NInput v-model:value="amount" size="large" /></div></div>
+            <div v-else-if="entry.type === 'activity'" class="bg-ios-card rounded-3xl p-5 shadow-card"><p class="text-base font-semibold text-ios-label mb-2">事件类型</p><NInput v-model:value="eventType" size="large" /></div>
+            <div v-else class="bg-ios-card rounded-3xl p-5 shadow-card"><p class="text-lg font-semibold text-ios-label">睡眠记录</p><p class="text-base text-ios-secondary mt-2">可在“修改时间”中调整开始和结束时间。</p></div>
+            <div v-if="entry.type !== 'temperature'" class="bg-ios-card rounded-3xl p-5 shadow-card"><p class="text-base font-semibold text-ios-label mb-2">备注（选填）</p><NInput v-model:value="remark" type="textarea" :autosize="{ minRows: 3 }" /></div>
+          </div>
+          <button class="w-full mt-4 min-h-16 rounded-2xl bg-ios-blue text-white text-lg font-semibold" @click="seniorStep = 'confirm'">下一步</button>
+        </template>
+
+        <template v-else>
+          <div class="flex items-center justify-between mb-5"><button class="text-ios-blue text-lg font-semibold" @click="seniorStep = 'summary'">返回</button><h3 class="text-xl font-bold text-ios-label">确认修改</h3><span class="w-10" /></div>
+          <div class="bg-ios-card rounded-3xl p-5 shadow-card space-y-4"><p class="text-lg font-bold text-ios-label">请确认以下内容</p><div><p class="text-sm text-ios-secondary">记录时间</p><p class="text-lg font-semibold text-ios-label mt-1">{{ seniorTimeText }}</p></div><div><p class="text-sm text-ios-secondary">记录内容</p><p class="text-xl font-bold text-ios-label mt-1">{{ seniorDetailText }}</p></div></div>
+          <button class="w-full mt-4 min-h-16 rounded-2xl bg-ios-blue text-white text-xl font-bold disabled:opacity-60" :disabled="submitting" @click="onSave">{{ submitting ? '保存中…' : '确认保存' }}</button>
+        </template>
+      </div>
+
+      <div
+        v-else
         class="relative w-full max-w-app bg-ios-bg rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto no-scrollbar animate-slide-up safe-bottom"
       >
         <div class="flex items-center justify-between mb-4">
