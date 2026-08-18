@@ -57,6 +57,8 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENV NODE_ENV=production
+# 业务日期按家庭所在时区计算；可在部署时用 APP_TIME_ZONE 覆盖。
+ENV APP_TIME_ZONE=Asia/Shanghai
 EXPOSE 80
 
 CMD ["/entrypoint.sh"]

@@ -4,6 +4,10 @@
  * - 否则由 DATABASE_HOST/PORT/NAME/USERNAME/PASSWORD 拼接（密码自动 URL 编码）
  */
 export default () => {
+  // 记录日期由家庭所在地的自然日定义，不能依赖容器默认的 UTC 时区。
+  // Node 会读取 TZ 来解析 Date#getHours / setHours，需在应用初始化时尽早设置。
+  const timeZone = process.env.APP_TIME_ZONE || 'Asia/Shanghai';
+  process.env.TZ = timeZone;
   const host = process.env.DATABASE_HOST;
   const port = process.env.DATABASE_PORT || '5432';
   const name = process.env.DATABASE_NAME;
@@ -31,6 +35,7 @@ export default () => {
     app: {
       port: Number(process.env.APP_PORT) || 3000,
       env: process.env.NODE_ENV || 'development',
+      timeZone,
       apiPrefix: process.env.API_PREFIX || 'api/v1',
       swaggerPath: process.env.SWAGGER_PATH || 'docs',
       corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',

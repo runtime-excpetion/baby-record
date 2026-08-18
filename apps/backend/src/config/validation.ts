@@ -6,6 +6,16 @@ import * as Joi from 'joi';
 export const validationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
   APP_PORT: Joi.number().default(3000),
+  APP_TIME_ZONE: Joi.string()
+    .custom((value, helpers) => {
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: value });
+        return value;
+      } catch {
+        return helpers.error('any.invalid');
+      }
+    })
+    .default('Asia/Shanghai'),
   API_PREFIX: Joi.string().default('api/v1'),
   SWAGGER_PATH: Joi.string().default('docs'),
   CORS_ORIGIN: Joi.string().default('http://localhost:5173'),
